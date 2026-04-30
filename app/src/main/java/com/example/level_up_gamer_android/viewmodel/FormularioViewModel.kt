@@ -30,29 +30,16 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     val cart: StateFlow<Map<Producto, Int>> = _cart
 
     init {
-        cargarDatosMock()
+        cargarDatos()
     }
 
-    private fun cargarDatosMock() {
+    private fun cargarDatos() {
         viewModelScope.launch {
             try {
-                val usuariosExistentes = database.usuarioDao().obtenerUsuarios()
-                if (usuariosExistentes.isEmpty()) {
-                    LevelUpDatabase.MOCK_TIPO_USUARIOS.forEach { tipo ->
-                        database.tipoUsuariosDao().insertar(tipo)
-                    }
-                    LevelUpDatabase.MOCK_USUARIOS.forEach { usuario ->
-                        database.usuarioDao().insertar(usuario)
-                    }
-                    LevelUpDatabase.MOCK_PRODUCTOS.forEach { producto ->
-                        database.productoDao().insertar(producto)
-                    }
-                }
                 _usuarios.value = database.usuarioDao().obtenerUsuarios()
                 _productos.value = database.productoDao().obtenerProductos()
             } catch (e: Exception) {
-                _usuarios.value = LevelUpDatabase.MOCK_USUARIOS
-                _productos.value = LevelUpDatabase.MOCK_PRODUCTOS
+                android.util.Log.e("DB", "Error al cargar datos", e)
             }
         }
     }
