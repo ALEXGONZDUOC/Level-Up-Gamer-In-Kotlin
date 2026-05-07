@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -73,11 +72,12 @@ fun LoginForm(
         CustomButton(
             text = "Iniciar Sesión",
             onClick = {
-                val esValido = viewModel.login(nombre, contrasena)
-                if (esValido) {
-                    onLoginSuccess()
-                } else {
-                    mensajeError = "Usuario o contraseña incorrectos"
+                viewModel.login(nombre, contrasena) { esValido ->
+                    if (esValido) {
+                        onLoginSuccess()
+                    } else {
+                        mensajeError = "Usuario o contraseña incorrectos"
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -93,11 +93,6 @@ fun LoginForm(
 
 @Composable
 fun RegistroForm(viewModel: FormularioViewModel) {
-    var nombre by remember { mutableStateOf("") }
-    var contrasena by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var mensajeRegistro by remember { mutableStateOf("") }
-
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -106,63 +101,14 @@ fun RegistroForm(viewModel: FormularioViewModel) {
             .padding(32.dp)
     ) {
         CustomText(
-            text = "Registro de Usuario",
+            text = "Registro No Disponible",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 24.dp)
         )
-
-        CustomTextField(
-            value = nombre,
-            onValueChange = { nombre = it },
-            label = "Ingrese nombre de usuario",
-            modifier = Modifier.fillMaxWidth()
+        CustomText(
+            text = "La función de registro estará disponible en la V0.5.2",
+            style = MaterialTheme.typography.bodyMedium
         )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        CustomTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = "Ingrese su correo electrónico",
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        CustomTextField(
-            value = contrasena,
-            onValueChange = { contrasena = it },
-            label = "Ingrese su contraseña",
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        CustomButton(
-            text = "Registrar",
-            onClick = {
-                if (nombre.isNotBlank() && contrasena.isNotBlank() && email.isNotBlank()) {
-                    viewModel.agregarUsuario(nombre, contrasena, email)
-                    mensajeRegistro = "Usuario registrado correctamente"
-                    nombre = ""
-                    contrasena = ""
-                    email = ""
-                } else {
-                    mensajeRegistro = "Por favor complete todos los campos"
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (mensajeRegistro.isNotEmpty()) {
-            CustomText(
-                text = mensajeRegistro,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 24.dp)
-            )
-        }
     }
 }
 
@@ -172,12 +118,6 @@ fun UpdateProfileForm(
     onUpdateSuccess: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val currentUser by viewModel.currentUser.collectAsState()
-    var nombre by remember { mutableStateOf(currentUser?.nombre ?: "") }
-    var email by remember { mutableStateOf(currentUser?.email ?: "") }
-    var contrasena by remember { mutableStateOf("") }
-    var mensaje by remember { mutableStateOf("") }
-
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -186,62 +126,13 @@ fun UpdateProfileForm(
             .padding(32.dp)
     ) {
         CustomText(
-            text = "Actualizar Perfil",
+            text = "Actualización No Disponible",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 24.dp)
         )
-
-        CustomTextField(
-            value = nombre,
-            onValueChange = { nombre = it },
-            label = "Nombre de usuario",
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        CustomTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = "Correo electrónico",
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        CustomTextField(
-            value = contrasena,
-            onValueChange = { contrasena = it },
-            label = "Nueva contraseña (dejar en blanco para no cambiar)",
-            isPassword = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        if (mensaje.isNotEmpty()) {
-            CustomText(
-                text = mensaje,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-        }
-
-        CustomButton(
-            text = "Actualizar",
-            onClick = {
-                currentUser?.let { user ->
-                    val updatedUser = user.copy(
-                        nombre = nombre,
-                        email = email,
-                        contrasena = if (contrasena.isNotBlank()) contrasena else user.contrasena
-                    )
-                    viewModel.actualizarUsuario(updatedUser)
-                    mensaje = "Perfil actualizado correctamente"
-                    onUpdateSuccess()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
+        CustomText(
+            text = "La actualización de perfil estará disponible en la V0.5.2",
+            style = MaterialTheme.typography.bodyMedium
         )
     }
 }

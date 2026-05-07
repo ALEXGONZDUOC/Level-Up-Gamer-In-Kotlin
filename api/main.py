@@ -25,7 +25,16 @@ class LoginRequest(BaseModel):
     nombre: str
     contrasena: str
 
-@app.post("/login")
+class UsuarioResponse(BaseModel):
+    id: int
+    nombre: str
+    contrasena: str
+    email: str
+    tipo_usuario_id: int
+    activo: bool
+    fecha_creacion: str
+
+@app.post("/login", response_model=UsuarioResponse)
 def login(req: LoginRequest):
     conn = get_db_connection()
     try:
@@ -33,16 +42,17 @@ def login(req: LoginRequest):
             cursor.execute("SELECT * FROM usuario WHERE nombre=%s AND contrasena=%s", (req.nombre, req.contrasena))
             user = cursor.fetchone()
             if not user: raise HTTPException(401, "Credenciales incorrectas")
-            return user
-    finally: conn.close()
-
-@app.get("/usuarios")
-def get_usuarios():
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM usuario")
-            return cursor.fetchall()
+            
+            # Mapeo manual para asegurar tipos
+            return UsuarioResponse(
+                id=int(user['id']),
+                nombre=str(user['nombre']),
+                contrasena=str(user['contrasena']),
+                email=str(user['email']),
+                tipo_usuario_id=int(user['tipo_usuario_id']),
+                activo=bool(user['activo']),
+                fecha_creacion=str(user['fecha_creacion'])
+            )
     finally: conn.close()
 
 @app.get("/productos")
@@ -51,7 +61,11 @@ def get_productos():
     try:
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM producto")
-            return cursor.fetchall()
+            productos = cursor.fetchall()
+            # No hay campos de fecha en producto según el script, pero por seguridad:
+            for p in productos:
+                if 'id' in p: p['id'] = int(p['id'])
+            return productos
     finally: conn.close()
 
 if __name__ == "__main__":

@@ -1,21 +1,16 @@
 package com.example.level_up_gamer_android.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.level_up_gamer_android.data.LevelUpDatabase
 import com.example.level_up_gamer_android.model.Producto
 import com.example.level_up_gamer_android.model.Usuario
+import com.example.level_up_gamer_android.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlin.math.max
 
-class FormularioViewModel(application: Application) : AndroidViewModel(application) {
-    private val database = LevelUpDatabase.getDatabase(application)
-
-    private val _usuarios = MutableStateFlow<List<Usuario>>(emptyList())
-    val usuarios: StateFlow<List<Usuario>> = _usuarios
+class FormularioViewModel : ViewModel() {
+    private val apiService = RetrofitClient.instance
 
     private val _productos = MutableStateFlow<List<Producto>>(emptyList())
     val productos: StateFlow<List<Producto>> = _productos
@@ -36,63 +31,28 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     private fun cargarDatos() {
         viewModelScope.launch {
             try {
-                _usuarios.value = database.usuarioDao().obtenerUsuarios()
-                _productos.value = database.productoDao().obtenerProductos()
+                _productos.value = apiService.getProductos()
             } catch (e: Exception) {
-                android.util.Log.e("DB", "Error al cargar datos", e)
+                android.util.Log.e("API", "Error al cargar datos", e)
             }
         }
     }
 
-    fun agregarUsuario(nombre: String, contrasena: String, email: String) {
-        val nuevoUsuario = Usuario(
-            nombre = nombre,
-            contrasena = contrasena,
-            email = email,
-            tipo_usuario_id = 2,
-            activo = true,
-            fecha_creacion = java.time.LocalDate.now().toString()
-        )
+    fun login(nombre: String, contrasena: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
-                android.util.Log.d("DB", "Intentando insertar usuario: $nuevoUsuario")
-                database.usuarioDao().insertar(nuevoUsuario)
-                _usuarios.value = database.usuarioDao().obtenerUsuarios()
-                android.util.Log.d("DB", "Usuarios después de insertar: ${_usuarios.value}")
-            } catch (e: Exception) {
-                android.util.Log.e("DB", "Error al insertar usuario", e)
-                e.printStackTrace()
-            }
-        }
-    }
-
-    fun actualizarUsuario(usuario: Usuario) {
-        viewModelScope.launch {
-            try {
-                database.usuarioDao().actualizar(usuario)
-                _usuarios.value = database.usuarioDao().obtenerUsuarios()
+                android.util.Log.d("API", "Iniciando login para: $nombre")
+                val credentials = mapOf("nombre" to nombre, "contrasena" to contrasena)
+                val usuario = apiService.login(credentials)
+                android.util.Log.d("API", "Login exitoso: ${usuario.nombre}")
+                _isLoggedIn.value = true
                 _currentUser.value = usuario
+                onResult(true)
             } catch (e: Exception) {
-                android.util.Log.e("DB", "Error al actualizar usuario", e)
-                e.printStackTrace()
+                android.util.Log.e("API", "Error en login", e)
+                onResult(false)
             }
         }
-    }
-
-    fun cargarUsuarios() {
-        viewModelScope.launch {
-            _usuarios.value = database.usuarioDao().obtenerUsuarios()
-        }
-    }
-
-    fun login(nombre: String, contrasena: String): Boolean {
-        val usuario = _usuarios.value.find { it.nombre == nombre && it.contrasena == contrasena }
-        if (usuario != null) {
-            _isLoggedIn.value = true
-            _currentUser.value = usuario
-            return true
-        }
-        return false
     }
 
     fun logout() {
@@ -135,15 +95,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
         _cart.value = currentCart
     }
 
-    fun getCartItems(): List<Pair<Producto, Int>> {
-        return _cart.value.map { it.key to it.value }
-    }
-
-    fun getTotal(): Double {
-        return _cart.value.entries.sumOf { it.key.precio * it.value }
-    }
-
-    fun clearCart() {
-        _cart.value = emptyMap()
-    }
+    fun getCartItems(): List<Pair<Producto, Int>> = _cart.value.map { it.key to it.value }
+    fun getTotal(): Double = _cart.value.entries.sumOf { it.key.precio * it.value }
+    fun clearCart() { _cart.value = emptyMap() }
 }

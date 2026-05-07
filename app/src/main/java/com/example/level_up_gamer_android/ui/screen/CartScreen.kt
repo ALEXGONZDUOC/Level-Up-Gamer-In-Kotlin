@@ -100,7 +100,7 @@ fun CartScreen(
                             )
                             CustomButton(
                                 text = "Comprar",
-                                onClick = { /* TODO: Implementar checkout */ },
+                                onClick = { /* TODO: Implementar checkout en versiones futuras */ },
                                 modifier = Modifier.weight(1f)
                             )
                         }
