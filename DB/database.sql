@@ -1,58 +1,62 @@
--- Script de creacion de base de datos para Level Up Gamer (MySQL 8.0) - V0.5.x
-CREATE DATABASE IF NOT EXISTS level_up_gamer;
-USE level_up_gamer;
+-- ======================================================
+-- SCRIPT DE INICIALIZACIÓN: LEVEL UP GAMER - V0.5.2
+-- FORMATO: Pesos Chilenos (CLP) - Base Refinada
+-- ======================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS usuario;
-DROP TABLE IF EXISTS tipo_usuario;
-DROP TABLE IF EXISTS producto;
+DROP DATABASE IF EXISTS level_up_gamer;
+CREATE DATABASE level_up_gamer;
+USE level_up_gamer;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- Tabla: tipo_usuario
-CREATE TABLE IF NOT EXISTS tipo_usuario (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+-- 1. Roles del Sistema
+CREATE TABLE tipo_usuario (
+    id INT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
     descripcion VARCHAR(255)
-);
+) ENGINE=InnoDB;
 
--- Tabla: usuario
-CREATE TABLE IF NOT EXISTS usuario (
+INSERT INTO tipo_usuario (id, nombre, descripcion) VALUES
+(1, 'Admin', 'Administración total del sistema'),
+(2, 'Supervisor', 'Acceso a reportería y estadísticas'),
+(3, 'Usuario', 'Cliente final de la tienda');
+
+-- 2. Tabla de Usuarios
+CREATE TABLE usuario (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    contrasena VARCHAR(255) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    tipo_usuario_id INT,
-    activo BOOLEAN DEFAULT TRUE,
-    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    contrasena VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    tipo_usuario_id INT NOT NULL,
+    activo TINYINT(1) DEFAULT 1,
+    fecha_creacion DATE NOT NULL,
     FOREIGN KEY (tipo_usuario_id) REFERENCES tipo_usuario(id)
-);
+) ENGINE=InnoDB;
 
--- Tabla: producto
-CREATE TABLE IF NOT EXISTS producto (
+INSERT INTO usuario (nombre, contrasena, email, tipo_usuario_id, activo, fecha_creacion) VALUES
+('admin', 'admin123', 'admin@example.com', 1, 1, CURDATE()),
+('super', 'super123', 'super@example.com', 2, 1, CURDATE()),
+('usuario1', 'pass123', 'user1@example.com', 3, 1, CURDATE());
+
+-- 3. Tabla de Productos
+CREATE TABLE producto (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    codigo DOUBLE NOT NULL,
-    nombre VARCHAR(150) NOT NULL,
+    codigo DOUBLE UNIQUE,
+    nombre VARCHAR(200) NOT NULL,
     categoria VARCHAR(100),
     descripcion TEXT,
-    precio DOUBLE NOT NULL,
-    cantidad INT NOT NULL,
-    imagenUrl VARCHAR(255),
-    imagenLocal VARCHAR(100),
-    INDEX (codigo)
-);
-
--- Datos iniciales
-INSERT INTO tipo_usuario (nombre, descripcion) VALUES ('Administrador', 'Acceso total al sistema');
-INSERT INTO tipo_usuario (nombre, descripcion) VALUES ('Cliente', 'Acceso para realizar compras');
-INSERT INTO tipo_usuario (nombre, descripcion) VALUES ('Supervisor', 'Gestion de inventario y pedidos');
-
-INSERT INTO usuario (nombre, contrasena, email, tipo_usuario_id) VALUES ('admin', 'admin123', 'admin@example.com', 1);
-INSERT INTO usuario (nombre, contrasena, email, tipo_usuario_id) VALUES ('usuario1', 'pass123', 'user1@example.com', 2);
+    precio INT NOT NULL,
+    cantidad INT DEFAULT 0,
+    imagenUrl VARCHAR(500) DEFAULT '',
+    imagenLocal VARCHAR(100) DEFAULT 'product_placeholder'
+) ENGINE=InnoDB;
 
 INSERT INTO producto (codigo, nombre, categoria, descripcion, precio, cantidad, imagenLocal) VALUES
-(1001, 'Teclado Mecanico RGB', 'Perifericos', 'Teclado mecanico con interruptores blue y retroiluminacion RGB.', 59.99, 15, 'i1001'),
-(1002, 'Mouse Gamer Optrical', 'Perifericos', 'Mouse ergonomico de 16000 DPI con 6 botones programables.', 35.50, 25, 'i1002'),
-(2001, 'Monitor 4K 144Hz', 'Monitores', 'Monitor de 27 pulgadas con resolucion 4K y tasa de refresco de 144Hz.', 399.00, 10, 'i2001'),
-(3001, 'Headset Surround 7.1', 'Audio', 'Auriculares con sonido envolvente 7.1 y microfono con cancelacion de ruido.', 75.00, 20, 'i3001'),
-(3002, 'Silla Gamer Ergonomica', 'Muebles', 'Silla ajustable con soporte lumbar y reposacabezas.', 189.99, 8, 'i3002'),
-(4001, 'Tarjeta de Video RTX 4070', 'Componentes', 'Tarjeta grafica de ultima generacion para juegos exigentes.', 649.99, 5, 'i4001');
+(1001, 'Teclado Mecánico RGB', 'Periféricos', 'Teclado mecánico con interruptores blue y retroiluminación RGB.', 59990, 15, 'i1001'),
+(1002, 'Mouse Gamer Optical', 'Periféricos', 'Mouse ergonómico de 16000 DPI con 6 botones programables.', 35500, 25, 'i1002'),
+(2001, 'Monitor 4K 144Hz', 'Monitores', 'Monitor de 27 pulgadas con resolución 4K y tasa de refresco de 144Hz.', 399000, 10, 'i2001'),
+(3001, 'Headset Surround 7.1', 'Audio', 'Auriculares con sonido envolvente 7.1.', 75000, 20, 'i3001');
+
+-- ======================================================
+-- FIN DEL SCRIPT
+-- ======================================================

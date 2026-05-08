@@ -1,18 +1,16 @@
 package com.example.level_up_gamer_android.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-import com.example.level_up_gamer_android.ui.screen.HomeScreen
-import com.example.level_up_gamer_android.ui.screen.LoginScreen
-import com.example.level_up_gamer_android.ui.screen.SplashScreen
 import androidx.navigation.compose.rememberNavController
-import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
 import androidx.navigation.compose.composable
-import com.example.level_up_gamer_android.ui.screen.CartScreen
-import com.example.level_up_gamer_android.ui.screen.RegistroScreen
-import com.example.level_up_gamer_android.ui.screen.UpdateProfileScreen
-
+import androidx.navigation.navArgument
+import com.example.level_up_gamer_android.ui.screen.*
+import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
 
 @Composable
 fun AppNavigation() {
@@ -27,14 +25,27 @@ fun AppNavigation() {
             LoginScreen(
                 viewModel = viewModel,
                 onLoginSuccess = {
-                    navController.navigate("home") {
-                        popUpTo("login") { inclusive = true }
+                    val user = viewModel.currentUser.value
+                    if (user?.tipo_usuario_id == 1) {
+                        navController.navigate("admin_dashboard") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate("home") {
+                            popUpTo("login") { inclusive = true }
+                        }
                     }
                 },
                 onRegisterClick = {
                     navController.navigate("register")
                 }
             )
+        }
+        composable("admin_dashboard") {
+            AdminDashboardScreen(navController = navController)
+        }
+        composable("admin_users") {
+            AdminUserManagementScreen(navController = navController, viewModel = viewModel)
         }
         composable("home") {
             HomeScreen(
@@ -55,22 +66,37 @@ fun AppNavigation() {
         composable("register") {
             RegistroScreen(viewModel)
         }
-        composable("cart") {
+        composable(
+            route = "cart?userId={userId}",
+            arguments = listOf(navArgument("userId") { 
+                type = NavType.IntType
+                defaultValue = -1 
+            })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getInt("userId").takeIf { it != -1 }
             CartScreen(
                 viewModel = viewModel,
                 onBackToHome = {
                     navController.navigate("home") {
                         popUpTo("home") { inclusive = true }
                     }
-                }
+                },
+                targetUserId = userId
             )
         }
-        composable("update_profile") {
+        composable(
+            route = "update_profile?userId={userId}",
+            arguments = listOf(navArgument("userId") { 
+                type = NavType.IntType
+                defaultValue = -1 
+            })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getInt("userId").takeIf { it != -1 }
             UpdateProfileScreen(
                 navController = navController,
-                viewModel = viewModel
+                viewModel = viewModel,
+                targetUserId = userId
             )
         }
     }
 }
-

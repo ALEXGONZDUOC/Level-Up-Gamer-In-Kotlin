@@ -98,19 +98,12 @@ fun ProductoCard(producto: Producto, onAddToCart: () -> Unit) {
 @Composable
 fun ProductoImage(producto: Producto, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val localImageRes = getLocalImageResource(context, producto.codigo)
+    val fullImageUrl = com.example.level_up_gamer_android.utils.getFullImageUrl(producto.imagenUrl)
 
-    if (localImageRes != 0 && localImageRes != R.drawable.product_placeholder) {
-        Image(
-            painter = painterResource(id = localImageRes),
-            contentDescription = "Imagen de ${producto.nombre}",
-            modifier = modifier,
-            contentScale = ContentScale.Crop
-        )
-    } else if (producto.imagenUrl.isNotEmpty()) {
+    if (!fullImageUrl.isNullOrEmpty()) {
         AsyncImage(
             model = ImageRequest.Builder(context)
-                .data(producto.imagenUrl)
+                .data(fullImageUrl)
                 .crossfade(true)
                 .build(),
             contentDescription = "Imagen de ${producto.nombre}",
@@ -119,11 +112,21 @@ fun ProductoImage(producto: Producto, modifier: Modifier = Modifier) {
             error = painterResource(id = R.drawable.product_placeholder)
         )
     } else {
-        Image(
-            painter = painterResource(id = R.drawable.product_placeholder),
-            contentDescription = "Imagen de ${producto.nombre}",
-            modifier = modifier,
-            contentScale = ContentScale.Crop
-        )
+        val localImageRes = getLocalImageResource(context, producto.codigo)
+        if (localImageRes != 0 && localImageRes != R.drawable.product_placeholder) {
+            Image(
+                painter = painterResource(id = localImageRes),
+                contentDescription = "Imagen de ${producto.nombre}",
+                modifier = modifier,
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Image(
+                painter = painterResource(id = R.drawable.product_placeholder),
+                contentDescription = "Imagen de ${producto.nombre}",
+                modifier = modifier,
+                contentScale = ContentScale.Crop
+            )
+        }
     }
 }

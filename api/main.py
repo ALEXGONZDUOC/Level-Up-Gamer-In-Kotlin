@@ -1,10 +1,20 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional
 import pymysql
 import uvicorn
+from pathlib import Path
 
 app = FastAPI()
+
+BASE_DIR = Path(__file__).resolve().parent
+
+app.mount(
+    "/static",
+    StaticFiles(directory=BASE_DIR / "static"),
+    name="static"
+)
 
 db_config = {
     "host": "localhost",
@@ -21,6 +31,14 @@ def get_db_connection():
         print(f"Error DB: {e}")
         return None
 
+class UsuarioBase(BaseModel):
+    nombre: str
+    contrasena: str
+    email: str
+    tipo_usuario_id: int
+    activo: bool
+    fecha_creacion: str
+
 class LoginRequest(BaseModel):
     nombre: str
     contrasena: str
@@ -34,6 +52,49 @@ class UsuarioResponse(BaseModel):
     activo: bool
     fecha_creacion: str
 
+@app.get("/usuarios", response_model=List[UsuarioResponse])
+def get_usuarios():
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM usuario")
+            data = cursor.fetchall()
+            for u in data:
+                u["activo"] = bool(u["activo"])
+                u["fecha_creacion"] = str(u["fecha_creacion"])
+            return data
+    finally: conn.close()
+
+@app.post("/usuarios", response_model=UsuarioResponse)
+def registrar_usuario(u: UsuarioBase):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            query = "INSERT INTO usuario (nombre, contrasena, email, tipo_usuario_id, activo, fecha_creacion) VALUES (%s, %s, %s, %s, %s, %s)"
+            cursor.execute(query, (u.nombre, u.contrasena, u.email, u.tipo_usuario_id, 1 if u.activo else 0, u.fecha_creacion))
+            conn.commit()
+            cursor.execute("SELECT * FROM usuario WHERE id=%s", (cursor.lastrowid,))
+            user = cursor.fetchone()
+            user["activo"] = bool(user["activo"])
+            user["fecha_creacion"] = str(user["fecha_creacion"])
+            return user
+    finally: conn.close()
+
+@app.put("/usuarios/{id}", response_model=UsuarioResponse)
+def actualizar_usuario(id: int, u: UsuarioBase):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            query = "UPDATE usuario SET nombre=%s, email=%s, contrasena=%s, tipo_usuario_id=%s, activo=%s WHERE id=%s"
+            cursor.execute(query, (u.nombre, u.email, u.contrasena, u.tipo_usuario_id, 1 if u.activo else 0, id))
+            conn.commit()
+            cursor.execute("SELECT * FROM usuario WHERE id=%s", (id,))
+            user = cursor.fetchone()
+            user["activo"] = bool(user["activo"])
+            user["fecha_creacion"] = str(user["fecha_creacion"])
+            return user
+    finally: conn.close()
+
 @app.post("/login", response_model=UsuarioResponse)
 def login(req: LoginRequest):
     conn = get_db_connection()
@@ -42,17 +103,9 @@ def login(req: LoginRequest):
             cursor.execute("SELECT * FROM usuario WHERE nombre=%s AND contrasena=%s", (req.nombre, req.contrasena))
             user = cursor.fetchone()
             if not user: raise HTTPException(401, "Credenciales incorrectas")
-            
-            # Mapeo manual para asegurar tipos
-            return UsuarioResponse(
-                id=int(user['id']),
-                nombre=str(user['nombre']),
-                contrasena=str(user['contrasena']),
-                email=str(user['email']),
-                tipo_usuario_id=int(user['tipo_usuario_id']),
-                activo=bool(user['activo']),
-                fecha_creacion=str(user['fecha_creacion'])
-            )
+            user["activo"] = bool(user["activo"])
+            user["fecha_creacion"] = str(user["fecha_creacion"])
+            return user
     finally: conn.close()
 
 @app.get("/productos")
@@ -61,11 +114,7 @@ def get_productos():
     try:
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM producto")
-            productos = cursor.fetchall()
-            # No hay campos de fecha en producto según el script, pero por seguridad:
-            for p in productos:
-                if 'id' in p: p['id'] = int(p['id'])
-            return productos
+            return cursor.fetchall()
     finally: conn.close()
 
 if __name__ == "__main__":

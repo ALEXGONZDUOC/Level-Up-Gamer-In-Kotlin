@@ -11,7 +11,8 @@ import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
 @Composable
 fun UpdateProfileScreen(
     navController: NavController,
-    viewModel: FormularioViewModel
+    viewModel: FormularioViewModel,
+    targetUserId: Int? = null
 ) {
     Scaffold { padding ->
         UpdateProfileForm(
@@ -19,6 +20,7 @@ fun UpdateProfileScreen(
             onUpdateSuccess = {
                 navController.popBackStack()
             },
+            targetUserId = targetUserId,
             modifier = Modifier.padding(padding)
         )
     }

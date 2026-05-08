@@ -8,9 +8,13 @@ import com.example.level_up_gamer_android.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 class FormularioViewModel : ViewModel() {
     private val apiService = RetrofitClient.instance
+
+    private val _usuarios = MutableStateFlow<List<Usuario>>(emptyList())
+    val usuarios: StateFlow<List<Usuario>> = _usuarios
 
     private val _productos = MutableStateFlow<List<Producto>>(emptyList())
     val productos: StateFlow<List<Producto>> = _productos
@@ -38,18 +42,60 @@ class FormularioViewModel : ViewModel() {
         }
     }
 
+    fun cargarUsuarios() {
+        viewModelScope.launch {
+            try {
+                _usuarios.value = apiService.getUsuarios()
+            } catch (e: Exception) {
+                android.util.Log.e("API", "Error al cargar usuarios", e)
+            }
+        }
+    }
+
+    fun getUsuarioById(id: Int): Usuario? {
+        return _usuarios.value.find { it.id == id }
+    }
+
+    fun agregarUsuario(nombre: String, contrasena: String, email: String) {
+        val nuevoUsuario = Usuario(
+            nombre = nombre,
+            contrasena = contrasena,
+            email = email,
+            tipo_usuario_id = 3,
+            activo = true,
+            fecha_creacion = LocalDate.now().toString()
+        )
+        viewModelScope.launch {
+            try {
+                apiService.registrarUsuario(nuevoUsuario)
+                _usuarios.value = apiService.getUsuarios()
+            } catch (e: Exception) {
+                android.util.Log.e("API", "Error al registrar usuario", e)
+            }
+        }
+    }
+
+    fun actualizarUsuario(usuario: Usuario) {
+        viewModelScope.launch {
+            try {
+                val updated = apiService.actualizarUsuario(usuario.id, usuario)
+                _currentUser.value = updated
+                _usuarios.value = apiService.getUsuarios()
+            } catch (e: Exception) {
+                android.util.Log.e("API", "Error al actualizar usuario", e)
+            }
+        }
+    }
+
     fun login(nombre: String, contrasena: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
-                android.util.Log.d("API", "Iniciando login para: $nombre")
                 val credentials = mapOf("nombre" to nombre, "contrasena" to contrasena)
                 val usuario = apiService.login(credentials)
-                android.util.Log.d("API", "Login exitoso: ${usuario.nombre}")
                 _isLoggedIn.value = true
                 _currentUser.value = usuario
                 onResult(true)
             } catch (e: Exception) {
-                android.util.Log.e("API", "Error en login", e)
                 onResult(false)
             }
         }

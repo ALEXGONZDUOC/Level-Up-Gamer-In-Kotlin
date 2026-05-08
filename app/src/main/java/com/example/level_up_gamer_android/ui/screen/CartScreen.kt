@@ -19,10 +19,14 @@ import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
 @Composable
 fun CartScreen(
     viewModel: FormularioViewModel,
-    onBackToHome: () -> Unit
+    onBackToHome: () -> Unit,
+    targetUserId: Int? = null
 ) {
     val cartMap by viewModel.cart.collectAsState()
-    val cartItems = cartMap.toList()
+    val currentUser by viewModel.currentUser.collectAsState()
+    
+    val isTargetingOtherUser = targetUserId != null && targetUserId != currentUser?.id
+    val cartItems = if (isTargetingOtherUser) emptyList() else cartMap.toList()
     val total = cartItems.sumOf { (producto, qty) -> producto.precio * qty }
 
     GradientSurface {
@@ -39,7 +43,7 @@ fun CartScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 CustomText(
-                    text = "Carrito de Compras",
+                    text = if (isTargetingOtherUser) "Carrito de Usuario ID: $targetUserId" else "Carrito de Compras",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -52,8 +56,15 @@ fun CartScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Carrito vacío
-            if (cartItems.isEmpty()) {
+            if (isTargetingOtherUser) {
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    CustomText(
+                        text = "Los carritos de otros usuarios no son persistentes en esta versión (V0.5.2).",
+                        fontSize = 18.sp,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+            } else if (cartItems.isEmpty()) {
                 EmptyCartView()
             } else {
                 // Lista del carrito
@@ -100,7 +111,7 @@ fun CartScreen(
                             )
                             CustomButton(
                                 text = "Comprar",
-                                onClick = { /* TODO: Implementar checkout en versiones futuras */ },
+                                onClick = { /* TODO: Implementar checkout */ },
                                 modifier = Modifier.weight(1f)
                             )
                         }

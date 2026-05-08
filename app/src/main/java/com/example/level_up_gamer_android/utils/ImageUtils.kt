@@ -9,3 +9,11 @@ fun getLocalImageResource(context: Context, codigoProducto: Double): Int {
     // Fallback a una imagen por defecto si no se encuentra el recurso
     return if (resourceId != 0) resourceId else R.drawable.product_placeholder
 }
+
+fun getFullImageUrl(imagenUrl: String?): String? {
+    if (imagenUrl.isNullOrEmpty()) return null
+    if (imagenUrl.startsWith("http")) return imagenUrl
+    
+    val baseUrl = com.example.level_up_gamer_android.network.RetrofitClient.BASE_URL
+    return "${baseUrl.trimEnd('/')}/${imagenUrl.removePrefix("/")}"
+}
