@@ -14,6 +14,7 @@ fun getFullImageUrl(imagenUrl: String?): String? {
     if (imagenUrl.isNullOrEmpty()) return null
     if (imagenUrl.startsWith("http")) return imagenUrl
     
-    val baseUrl = com.example.level_up_gamer_android.network.RetrofitClient.BASE_URL
-    return "${baseUrl.trimEnd('/')}/${imagenUrl.removePrefix("/")}"
+    val baseUrl = com.example.level_up_gamer_android.network.RetrofitClient.BASE_URL.trimEnd('/')
+    val cleanPath = imagenUrl.removePrefix("/")
+    return "$baseUrl/$cleanPath"
 }

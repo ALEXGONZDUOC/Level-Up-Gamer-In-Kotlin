@@ -121,7 +121,7 @@ fun CartItemImage(producto: Producto, modifier: Modifier = Modifier) {
                 contentScale = ContentScale.Crop
             )
 
-        producto.imagenUrl.isNotEmpty() ->
+        !producto.imagenUrl.isNullOrEmpty() ->
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(producto.imagenUrl)

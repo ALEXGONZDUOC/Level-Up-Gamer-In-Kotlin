@@ -1,6 +1,6 @@
 -- ======================================================
--- SCRIPT DE INICIALIZACIÓN: LEVEL UP GAMER - V0.5.2
--- FORMATO: Pesos Chilenos (CLP) - Base Refinada
+-- SCRIPT DE INICIALIZACIÓN: LEVEL UP GAMER - V0.6
+-- FORMATO: Pesos Chilenos (CLP) - Novedad: Estadísticas
 -- ======================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -48,14 +48,27 @@ CREATE TABLE producto (
     precio INT NOT NULL,
     cantidad INT DEFAULT 0,
     imagenUrl VARCHAR(500) DEFAULT '',
-    imagenLocal VARCHAR(100) DEFAULT 'product_placeholder'
+    imagenLocal VARCHAR(100) DEFAULT 'product_placeholder',
+    total_vendido INT DEFAULT 0
 ) ENGINE=InnoDB;
 
-INSERT INTO producto (codigo, nombre, categoria, descripcion, precio, cantidad, imagenLocal) VALUES
-(1001, 'Teclado Mecánico RGB', 'Periféricos', 'Teclado mecánico con interruptores blue y retroiluminación RGB.', 59990, 15, 'i1001'),
-(1002, 'Mouse Gamer Optical', 'Periféricos', 'Mouse ergonómico de 16000 DPI con 6 botones programables.', 35500, 25, 'i1002'),
-(2001, 'Monitor 4K 144Hz', 'Monitores', 'Monitor de 27 pulgadas con resolución 4K y tasa de refresco de 144Hz.', 399000, 10, 'i2001'),
-(3001, 'Headset Surround 7.1', 'Audio', 'Auriculares con sonido envolvente 7.1.', 75000, 20, 'i3001');
+INSERT INTO producto (codigo, nombre, categoria, descripcion, precio, cantidad, imagenUrl, imagenLocal, total_vendido) VALUES
+(1001, 'Teclado Mecánico RGB', 'Periféricos', 'Teclado mecánico con interruptores blue y retroiluminación RGB.', 59990, 15, 'static/images/i1001.jpg', 'i1001', 5),
+(1002, 'Mouse Gamer Optical', 'Periféricos', 'Mouse ergonómico de 16000 DPI con 6 botones programables.', 35500, 25, 'static/images/i1002.jpg', 'i1002', 12),
+(2001, 'Monitor 4K 144Hz', 'Monitores', 'Monitor de 27 pulgadas con resolución 4K y tasa de refresco de 144Hz.', 399000, 10, 'static/images/i2001.jpg', 'i2001', 2);
+
+-- 4. Pedidos (Simples para estadísticas)
+CREATE TABLE pedidos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    total INT NOT NULL,
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+) ENGINE=InnoDB;
+
+INSERT INTO pedidos (usuario_id, fecha, total) VALUES 
+(3, CURDATE(), 150000), 
+(3, DATE_SUB(CURDATE(), INTERVAL 2 DAY), 300500);
 
 -- ======================================================
 -- FIN DEL SCRIPT

@@ -26,12 +26,14 @@ fun AppNavigation() {
                 viewModel = viewModel,
                 onLoginSuccess = {
                     val user = viewModel.currentUser.value
-                    if (user?.tipo_usuario_id == 1) {
-                        navController.navigate("admin_dashboard") {
+                    when (user?.tipo_usuario_id) {
+                        1 -> navController.navigate("admin_dashboard") {
                             popUpTo("login") { inclusive = true }
                         }
-                    } else {
-                        navController.navigate("home") {
+                        2 -> navController.navigate("supervisor") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                        else -> navController.navigate("home") {
                             popUpTo("login") { inclusive = true }
                         }
                     }
@@ -46,6 +48,17 @@ fun AppNavigation() {
         }
         composable("admin_users") {
             AdminUserManagementScreen(navController = navController, viewModel = viewModel)
+        }
+        composable("supervisor") {
+            SupervisorScreen(
+                viewModel = viewModel,
+                onLogout = {
+                    viewModel.logout()
+                    navController.navigate("login") {
+                        popUpTo("supervisor") { inclusive = true }
+                    }
+                }
+            )
         }
         composable("home") {
             HomeScreen(

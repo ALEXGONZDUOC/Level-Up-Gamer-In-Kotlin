@@ -19,4 +19,13 @@ interface ApiService {
 
     @GET("productos")
     suspend fun getProductos(): List<Producto>
+
+    @POST("productos/comprar")
+    suspend fun comprarProductos(@Body request: @JvmSuppressWildcards Map<String, Any>): Map<String, String>
+
+    @GET("estadisticas/ventas-totales")
+    suspend fun getVentasTotales(@Query("periodo") periodo: String): Map<String, Double>
+
+    @GET("estadisticas/top-productos")
+    suspend fun getTopProductos(): List<Producto>
 }

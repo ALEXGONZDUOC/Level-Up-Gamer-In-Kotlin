@@ -28,6 +28,12 @@ class FormularioViewModel : ViewModel() {
     private val _cart = MutableStateFlow<Map<Producto, Int>>(emptyMap())
     val cart: StateFlow<Map<Producto, Int>> = _cart
 
+    private val _topProductos = MutableStateFlow<List<Producto>>(emptyList())
+    val topProductos: StateFlow<List<Producto>> = _topProductos
+
+    private val _ventasTotales = MutableStateFlow<Map<String, Double>>(emptyMap())
+    val ventasTotales: StateFlow<Map<String, Double>> = _ventasTotales
+
     init {
         cargarDatos()
     }
@@ -37,7 +43,7 @@ class FormularioViewModel : ViewModel() {
             try {
                 _productos.value = apiService.getProductos()
             } catch (e: Exception) {
-                android.util.Log.e("API", "Error al cargar datos", e)
+                android.util.Log.e("API", "Error al cargar productos", e)
             }
         }
     }
@@ -56,6 +62,25 @@ class FormularioViewModel : ViewModel() {
         return _usuarios.value.find { it.id == id }
     }
 
+    fun cargarEstadisticas() {
+        viewModelScope.launch {
+            try {
+                _topProductos.value = apiService.getTopProductos()
+                val vDia = apiService.getVentasTotales("dia")
+                val vSem = apiService.getVentasTotales("semana")
+                val vMes = apiService.getVentasTotales("mes")
+                
+                _ventasTotales.value = mapOf(
+                    "dia" to (vDia["total"] ?: 0.0),
+                    "semana" to (vSem["total"] ?: 0.0),
+                    "mes" to (vMes["total"] ?: 0.0)
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("API", "Error al cargar estadisticas", e)
+            }
+        }
+    }
+
     fun agregarUsuario(nombre: String, contrasena: String, email: String) {
         val nuevoUsuario = Usuario(
             nombre = nombre,
@@ -68,7 +93,7 @@ class FormularioViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 apiService.registrarUsuario(nuevoUsuario)
-                _usuarios.value = apiService.getUsuarios()
+                cargarUsuarios()
             } catch (e: Exception) {
                 android.util.Log.e("API", "Error al registrar usuario", e)
             }
@@ -80,7 +105,7 @@ class FormularioViewModel : ViewModel() {
             try {
                 val updated = apiService.actualizarUsuario(usuario.id, usuario)
                 _currentUser.value = updated
-                _usuarios.value = apiService.getUsuarios()
+                cargarUsuarios()
             } catch (e: Exception) {
                 android.util.Log.e("API", "Error al actualizar usuario", e)
             }
@@ -144,4 +169,30 @@ class FormularioViewModel : ViewModel() {
     fun getCartItems(): List<Pair<Producto, Int>> = _cart.value.map { it.key to it.value }
     fun getTotal(): Double = _cart.value.entries.sumOf { it.key.precio * it.value }
     fun clearCart() { _cart.value = emptyMap() }
+
+    fun comprar(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val cartItems = getCartItems()
+        if (cartItems.isEmpty()) {
+            onError("El carrito está vacío")
+            return
+        }
+
+        val requestData = mapOf(
+            "productos" to cartItems.map { (producto, quantity) ->
+                mapOf("id" to producto.id, "cantidad" to quantity)
+            }
+        )
+
+        viewModelScope.launch {
+            try {
+                apiService.comprarProductos(requestData)
+                clearCart()
+                cargarDatos() // Recargar productos para ver stock actualizado
+                onSuccess()
+            } catch (e: Exception) {
+                android.util.Log.e("API", "Error al procesar compra", e)
+                onError("Error al procesar la compra: ${e.message}")
+            }
+        }
+    }
 }

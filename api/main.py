@@ -2,9 +2,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional
+from pathlib import Path
 import pymysql
 import uvicorn
-from pathlib import Path
 
 app = FastAPI()
 
@@ -115,6 +115,55 @@ def get_productos():
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM producto")
             return cursor.fetchall()
+    finally: conn.close()
+
+class ItemCompra(BaseModel):
+    id: int
+    cantidad: int
+
+class CompraRequest(BaseModel):
+    productos: List[ItemCompra]
+
+@app.post("/productos/comprar")
+def comprar_productos(req: CompraRequest):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            for item in req.productos:
+                # Descuento de stock e incremento de ventas
+                cursor.execute(
+                    "UPDATE producto SET cantidad = cantidad - %s, total_vendido = total_vendido + %s WHERE id = %s",
+                    (item.cantidad, item.cantidad, item.id)
+                )
+            conn.commit()
+            return {"status": "success"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally: conn.close()
+
+@app.get("/estadisticas/top-productos")
+def get_top_productos():
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM producto ORDER BY total_vendido DESC")
+            return cursor.fetchall()
+    finally: conn.close()
+
+@app.get("/estadisticas/ventas-totales")
+def get_ventas_totales(periodo: str):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            if periodo == "dia": condicion = "DATE(fecha) = CURDATE()"
+            elif periodo == "semana": condicion = "YEARWEEK(fecha, 1) = YEARWEEK(CURDATE(), 1)"
+            else: condicion = "MONTH(fecha) = MONTH(CURDATE()) AND YEAR(fecha) = YEAR(CURDATE())"
+
+            # Nota: Requiere tabla pedidos (usuario_id, total, fecha)
+            cursor.execute(f"SELECT COALESCE(SUM(total), 0) as total FROM pedidos WHERE {condicion}")
+            res = cursor.fetchone()
+            return {"total": float(res["total"])}
     finally: conn.close()
 
 if __name__ == "__main__":

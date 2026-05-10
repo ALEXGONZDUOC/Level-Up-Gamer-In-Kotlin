@@ -29,7 +29,7 @@ fun AdminDashboardScreen(navController: NavController) {
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = { CustomText("Panel de Administrador") },
+                    title = { CustomText("Panel de Administrador (V0.6)") },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
             }
@@ -59,7 +59,7 @@ fun AdminDashboardScreen(navController: NavController) {
 }
 
 /* =========================
-   USER MANAGEMENT (Simplified for V0.5.2)
+   USER MANAGEMENT (V0.6 Evolution: Active/Inactive status)
 ========================= */
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,7 +94,6 @@ fun AdminUserManagementScreen(navController: NavController, viewModel: Formulari
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Selector de Usuarios
                 Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedButton(
                         onClick = { expandedList = true },
@@ -127,14 +126,13 @@ fun AdminUserManagementScreen(navController: NavController, viewModel: Formulari
                 Spacer(modifier = Modifier.height(32.dp))
 
                 selectedUser?.let { user ->
-                    EditUserTypeForm(user, viewModel) { updatedUser ->
+                    EditUserFormV06(user, viewModel) { updatedUser ->
                         viewModel.actualizarUsuario(updatedUser)
                         selectedUser = null
                     }
                     
                     Spacer(modifier = Modifier.height(32.dp))
                     
-                    // Botones para ver carrito e info (como pidió el usuario)
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         CustomButton(
                             text = "Ver Carrito",
@@ -154,8 +152,9 @@ fun AdminUserManagementScreen(navController: NavController, viewModel: Formulari
 }
 
 @Composable
-fun EditUserTypeForm(user: Usuario, viewModel: FormularioViewModel, onSave: (Usuario) -> Unit) {
-    var tipoUsuarioId by remember(user) { mutableStateOf(user.tipo_usuario_id) }
+fun EditUserFormV06(user: Usuario, viewModel: FormularioViewModel, onSave: (Usuario) -> Unit) {
+    var tipoUsuarioId by remember(user) { mutableIntStateOf(user.tipo_usuario_id) }
+    var activo by remember(user) { mutableStateOf(user.activo) }
     var expandedType by remember { mutableStateOf(false) }
 
     val tipos = listOf("Admin", "Supervisor", "Usuario")
@@ -164,9 +163,10 @@ fun EditUserTypeForm(user: Usuario, viewModel: FormularioViewModel, onSave: (Usu
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CustomText("Modificando tipo de: ${user.nombre}", fontSize = 18.sp)
+        CustomText("Editando a: ${user.nombre}", fontSize = 18.sp)
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Selector de Tipo
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(
                 onClick = { expandedType = true },
@@ -192,10 +192,26 @@ fun EditUserTypeForm(user: Usuario, viewModel: FormularioViewModel, onSave: (Usu
             }
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Toggle Activo/Inactivo (Evolution V0.6)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            CustomText("Estado de la cuenta: ${if (activo) "Activa" else "Desactivada"}")
+            Switch(
+                checked = activo,
+                onCheckedChange = { activo = it },
+                colors = SwitchDefaults.colors(checkedThumbColor = Color.Green, uncheckedThumbColor = Color.Red)
+            )
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
 
-        CustomButton("Guardar Tipo", onClick = {
-            onSave(user.copy(tipo_usuario_id = tipoUsuarioId))
+        CustomButton("Guardar Cambios", onClick = {
+            onSave(user.copy(tipo_usuario_id = tipoUsuarioId, activo = activo))
         }, Modifier.fillMaxWidth())
     }
 }

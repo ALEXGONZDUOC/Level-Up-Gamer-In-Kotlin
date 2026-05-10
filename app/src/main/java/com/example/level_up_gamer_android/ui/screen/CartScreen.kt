@@ -59,7 +59,7 @@ fun CartScreen(
             if (isTargetingOtherUser) {
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     CustomText(
-                        text = "Los carritos de otros usuarios no son persistentes en esta versión (V0.5.2).",
+                        text = "Los carritos de otros usuarios no son persistentes en esta versión (V0.6).",
                         fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.secondary
                     )
@@ -104,6 +104,7 @@ fun CartScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            val context = androidx.compose.ui.platform.LocalContext.current
                             CustomButton(
                                 text = "Vaciar Carrito",
                                 onClick = { viewModel.clearCart() },
@@ -111,7 +112,16 @@ fun CartScreen(
                             )
                             CustomButton(
                                 text = "Comprar",
-                                onClick = { /* TODO: Implementar checkout */ },
+                                onClick = {
+                                    viewModel.comprar(
+                                        onSuccess = {
+                                            android.widget.Toast.makeText(context, "Compra realizada con éxito", android.widget.Toast.LENGTH_SHORT).show()
+                                        },
+                                        onError = { error ->
+                                            android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_LONG).show()
+                                        }
+                                    )
+                                },
                                 modifier = Modifier.weight(1f)
                             )
                         }
