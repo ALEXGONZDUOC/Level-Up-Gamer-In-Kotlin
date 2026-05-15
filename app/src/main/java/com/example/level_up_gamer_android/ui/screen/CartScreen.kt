@@ -2,6 +2,7 @@ package com.example.level_up_gamer_android.ui.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
@@ -20,13 +21,11 @@ import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
 fun CartScreen(
     viewModel: FormularioViewModel,
     onBackToHome: () -> Unit,
+    onCheckoutClick: () -> Unit,
     targetUserId: Int? = null
 ) {
     val cartMap by viewModel.cart.collectAsState()
-    val currentUser by viewModel.currentUser.collectAsState()
-    
-    val isTargetingOtherUser = targetUserId != null && targetUserId != currentUser?.id
-    val cartItems = if (isTargetingOtherUser) emptyList() else cartMap.toList()
+    val cartItems = cartMap.toList()
     val total = cartItems.sumOf { (producto, qty) -> producto.precio * qty }
 
     GradientSurface {
@@ -43,7 +42,7 @@ fun CartScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 CustomText(
-                    text = if (isTargetingOtherUser) "Carrito de Usuario ID: $targetUserId" else "Carrito de Compras",
+                    text = "Mi Carrito",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -56,15 +55,17 @@ fun CartScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (isTargetingOtherUser) {
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    CustomText(
-                        text = "Los carritos de otros usuarios no son persistentes en esta versión (V0.6).",
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
-            } else if (cartItems.isEmpty()) {
+            if (targetUserId != null) {
+                val targetUser = viewModel.getUsuarioById(targetUserId)
+                CustomText(
+                    text = "Viendo carrito de: ${targetUser?.nombre ?: "Usuario $targetUserId"}",
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
+
+            // Carrito vacío
+            if (cartItems.isEmpty()) {
                 EmptyCartView()
             } else {
                 // Lista del carrito
@@ -77,9 +78,9 @@ fun CartScreen(
                         CartItemCard(
                             producto = producto,
                             quantity = quantity,
-                            onIncrease = { viewModel.addToCart(producto) },
-                            onDecrease = { viewModel.removeFromCart(producto) },
-                            onRemove = { viewModel.removeItemFromCart(producto) }
+                            onIncrease = { if (targetUserId == null) viewModel.addToCart(producto) },
+                            onDecrease = { if (targetUserId == null) viewModel.removeFromCart(producto) },
+                            onRemove = { if (targetUserId == null) viewModel.removeItemFromCart(producto) }
                         )
                     }
                 }
@@ -99,43 +100,28 @@ fun CartScreen(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            val context = androidx.compose.ui.platform.LocalContext.current
-                            CustomButton(
-                                text = "Vaciar Carrito",
-                                onClick = { viewModel.clearCart() },
-                                modifier = Modifier.weight(1f)
-                            )
-                            CustomButton(
-                                text = "Comprar",
-                                onClick = {
-                                    viewModel.comprar(
-                                        onSuccess = {
-                                            android.widget.Toast.makeText(context, "Compra realizada con éxito", android.widget.Toast.LENGTH_SHORT).show()
-                                        },
-                                        onError = { error ->
-                                            android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_LONG).show()
-                                        }
-                                    )
-                                },
-                                modifier = Modifier.weight(1f)
-                            )
+                        
+                        if (targetUserId == null) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                CustomButton(
+                                    text = "Vaciar",
+                                    onClick = { viewModel.clearCart() },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                CustomButton(
+                                    text = "Comprar",
+                                    onClick = onCheckoutClick,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Botón volver
-            CustomButton(
-                text = "Volver al Catálogo",
-                onClick = onBackToHome
-            )
         }
     }
 }

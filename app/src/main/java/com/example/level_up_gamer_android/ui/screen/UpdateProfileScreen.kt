@@ -1,6 +1,7 @@
 package com.example.level_up_gamer_android.ui.screen
 
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -18,7 +19,7 @@ fun UpdateProfileScreen(
         UpdateProfileForm(
             viewModel = viewModel,
             onUpdateSuccess = {
-                navController.popBackStack()
+                // No necesitamos volver manualmente, el botón dinámico de la barra nos guiará
             },
             targetUserId = targetUserId,
             modifier = Modifier.padding(padding)

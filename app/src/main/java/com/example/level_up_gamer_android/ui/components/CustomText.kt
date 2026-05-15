@@ -16,7 +16,8 @@ fun CustomText(
     style: TextStyle = LocalTextStyle.current,
     color: Color = Color.Unspecified,
     fontSize: TextUnit = TextUnit.Unspecified,
-    fontWeight: FontWeight? = null
+    fontWeight: FontWeight? = null,
+    textAlign: androidx.compose.ui.text.style.TextAlign? = null
 ) {
     Text(
         text = text,
@@ -24,6 +25,7 @@ fun CustomText(
         color = color,
         fontSize = fontSize,
         fontWeight = fontWeight,
-        style = style
+        style = style,
+        textAlign = textAlign
     )
 }

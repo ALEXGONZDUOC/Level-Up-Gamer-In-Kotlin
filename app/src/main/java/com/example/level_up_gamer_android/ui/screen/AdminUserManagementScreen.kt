@@ -11,56 +11,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.level_up_gamer_android.model.Usuario
 import com.example.level_up_gamer_android.ui.components.*
 import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
-
-/* =========================
-   ADMIN DASHBOARD
-========================= */
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AdminDashboardScreen(navController: NavController) {
-    GradientSurface {
-        Scaffold(
-            containerColor = Color.Transparent,
-            topBar = {
-                TopAppBar(
-                    title = { CustomText("Panel de Administrador (V0.6)") },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-                )
-            }
-        ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                CustomButton(
-                    text = "Ver Funcionamiento App",
-                    onClick = { navController.navigate("home") },
-                    modifier = Modifier.fillMaxWidth().height(80.dp)
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                CustomButton(
-                    text = "Gestionar Usuarios",
-                    onClick = { navController.navigate("admin_users") },
-                    modifier = Modifier.fillMaxWidth().height(80.dp)
-                )
-            }
-        }
-    }
-}
-
-/* =========================
-   USER MANAGEMENT (V0.6 Evolution: Active/Inactive status)
-========================= */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,12 +31,7 @@ fun AdminUserManagementScreen(navController: NavController, viewModel: Formulari
             topBar = {
                 TopAppBar(
                     title = { CustomText("Gestión de Usuarios") },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-                    navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = Color.White)
-                        }
-                    }
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
             }
         ) { padding ->
@@ -126,24 +75,38 @@ fun AdminUserManagementScreen(navController: NavController, viewModel: Formulari
                 Spacer(modifier = Modifier.height(32.dp))
 
                 selectedUser?.let { user ->
-                    EditUserFormV06(user, viewModel) { updatedUser ->
+                    EditUserFormV08(user, viewModel) { updatedUser ->
                         viewModel.actualizarUsuario(updatedUser)
                         selectedUser = null
                     }
                     
                     Spacer(modifier = Modifier.height(32.dp))
                     
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        CustomButton(
-                            text = "Ver Carrito",
-                            onClick = { navController.navigate("cart?userId=${user.id}") },
-                            modifier = Modifier.weight(1f)
-                        )
-                        CustomButton(
-                            text = "Ver Perfil",
-                            onClick = { navController.navigate("update_profile?userId=${user.id}") },
-                            modifier = Modifier.weight(1f)
-                        )
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CustomButton(
+                                text = "Carrito",
+                                onClick = { navController.navigate("cart?userId=${user.id}") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            CustomButton(
+                                text = "Perfil",
+                                onClick = { navController.navigate("update_profile?userId=${user.id}") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CustomButton(
+                                text = "Direcciones",
+                                onClick = { navController.navigate("address_selection?userId=${user.id}") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            CustomButton(
+                                text = "Pedidos",
+                                onClick = { /* Placeholder */ },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
                 }
             }
@@ -152,7 +115,7 @@ fun AdminUserManagementScreen(navController: NavController, viewModel: Formulari
 }
 
 @Composable
-fun EditUserFormV06(user: Usuario, viewModel: FormularioViewModel, onSave: (Usuario) -> Unit) {
+fun EditUserFormV08(user: Usuario, viewModel: FormularioViewModel, onSave: (Usuario) -> Unit) {
     var tipoUsuarioId by remember(user) { mutableIntStateOf(user.tipo_usuario_id) }
     var activo by remember(user) { mutableStateOf(user.activo) }
     var expandedType by remember { mutableStateOf(false) }
@@ -163,10 +126,9 @@ fun EditUserFormV06(user: Usuario, viewModel: FormularioViewModel, onSave: (Usua
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CustomText("Editando a: ${user.nombre}", fontSize = 18.sp)
+        CustomText("Gestionando cuenta: ${user.nombre}", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Selector de Tipo
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(
                 onClick = { expandedType = true },
@@ -174,7 +136,7 @@ fun EditUserFormV06(user: Usuario, viewModel: FormularioViewModel, onSave: (Usua
                 border = BorderStroke(1.dp, Color.White)
             ) {
                 Text(
-                    "Tipo: ${tipos.getOrElse(tipoUsuarioId - 1) { "Desconocido" }}",
+                    "Rol: ${tipos.getOrElse(tipoUsuarioId - 1) { "Desconocido" }}",
                     color = Color.White
                 )
                 Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color.White)
@@ -194,23 +156,21 @@ fun EditUserFormV06(user: Usuario, viewModel: FormularioViewModel, onSave: (Usua
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Toggle Activo/Inactivo (Evolution V0.6)
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            CustomText("Estado de la cuenta: ${if (activo) "Activa" else "Desactivada"}")
+            CustomText("Estado: ${if (activo) "Activo" else "Baneado/Inactivo"}")
             Switch(
                 checked = activo,
-                onCheckedChange = { activo = it },
-                colors = SwitchDefaults.colors(checkedThumbColor = Color.Green, uncheckedThumbColor = Color.Red)
+                onCheckedChange = { activo = it }
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        CustomButton("Guardar Cambios", onClick = {
+        CustomButton("Aplicar Cambios", onClick = {
             onSave(user.copy(tipo_usuario_id = tipoUsuarioId, activo = activo))
         }, Modifier.fillMaxWidth())
     }
