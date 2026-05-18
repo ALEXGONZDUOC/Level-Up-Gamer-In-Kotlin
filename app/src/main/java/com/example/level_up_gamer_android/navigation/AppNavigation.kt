@@ -1,172 +1,306 @@
 package com.example.level_up_gamer_android.navigation
 
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.example.level_up_gamer_android.ui.screen.*
-import com.example.level_up_gamer_android.ui.components.AppBottomBar
+import com.example.level_up_gamer_android.ui.screen.AddressSelectionScreen
+import com.example.level_up_gamer_android.ui.screen.PaymentScreen
+import com.example.level_up_gamer_android.ui.screen.OrderConfirmationScreen
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
+import com.example.level_up_gamer_android.ui.screen.*
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.level_up_gamer_android.ui.components.AppBottomBar
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
     val viewModel: FormularioViewModel = viewModel()
     
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    val currentUser by viewModel.currentUser.collectAsState()
     val isLoggedIn by viewModel.isLoggedIn.collectAsState()
-
-    // Pantallas donde NO se muestra la barra inferior
-    val hideBottomBarRoutes = listOf("splash", "login", "register", "verification", "forgot_password")
-    val shouldShowBottomBar = currentRoute != null && !hideBottomBarRoutes.any { currentRoute.startsWith(it) }
+    val currentUser by viewModel.currentUser.collectAsState()
+    val tipoUsuarioId = currentUser?.tipo_usuario_id ?: 0
 
     Scaffold(
         bottomBar = {
-            if (shouldShowBottomBar) {
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
+            
+            // Lógica de visibilidad de la barra
+            val hideBarRoutes = listOf("splash", "login", "register", "verification", "forgot_password")
+            val shouldShowBar = currentRoute != null && !hideBarRoutes.any { currentRoute.startsWith(it) }
+
+            if (shouldShowBar) {
                 AppBottomBar(
                     navController = navController,
-                    tipoUsuarioId = currentUser?.tipo_usuario_id ?: 3,
+                    tipoUsuarioId = tipoUsuarioId,
                     isLoggedIn = isLoggedIn,
-                    onLogoutAction = {
-                        if (isLoggedIn) {
-                            viewModel.logout()
-                            navController.navigate("login") {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        } else {
-                            navController.navigate("login")
+                    onLogout = {
+                        viewModel.logout()
+                        navController.navigate("home") {
+                            popUpTo(0) { inclusive = true }
                         }
                     }
                 )
             }
         }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController, 
-            startDestination = "home", // CAMBIO: Inicia en la Tienda (Modo Invitado)
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable("splash") { SplashScreen(navController) }
-            
-            composable("login") {
-                LoginScreen(
-                    viewModel = viewModel,
-                    onLoginSuccess = {
-                        val user = viewModel.currentUser.value
-                        val route = when (user?.tipo_usuario_id) {
-                            1 -> "admin_dashboard"
-                            2 -> "supervisor"
-                            else -> "home"
+    ) { padding ->
+        Box(modifier = Modifier.padding(padding)) {
+            NavHost(
+                navController = navController,
+                startDestination = "splash",
+
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { 1000 },
+                        animationSpec = tween(400)
+                    ) + fadeIn(animationSpec = tween(400))
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { -1000 },
+                        animationSpec = tween(400)
+                    ) + fadeOut(animationSpec = tween(400))
+                },
+                popEnterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { -1000 },
+                        animationSpec = tween(400)
+                    ) + fadeIn(animationSpec = tween(400))
+                },
+                popExitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { 1000 },
+                        animationSpec = tween(400)
+                    ) + fadeOut(animationSpec = tween(400))
+                }
+            ) {
+
+                // Splash
+                composable("splash") {
+                    SplashScreen(navController = navController)
+                }
+
+                // Login
+                composable("login") {
+                    LoginScreen(
+                        viewModel = viewModel,
+                        onLoginSuccess = {
+                            val user = viewModel.currentUser.value
+                            when (user?.tipo_usuario_id) {
+                                1 -> navController.navigate("admin_users") {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                                2 -> navController.navigate("total_ventas") {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                                else -> navController.navigate("home") {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            }
+                        },
+                        onRegisterClick = {
+                            navController.navigate("register")
+                        },
+                        onForgotPasswordClick = {
+                            navController.navigate("forgot_password")
                         }
-                        navController.navigate(route) {
-                            popUpTo("login") { inclusive = true }
+                    )
+                }
+
+                // Admin Dashboard
+                composable("admin_dashboard") {
+                    AdminDashboardScreen(navController = navController)
+                }
+
+                // Gestión de Usuarios (Admin)
+                composable("admin_users") {
+                    AdminUserManagementScreen(navController = navController, viewModel = viewModel)
+                }
+
+                // Estadísticas de Ventas (Supervisor)
+                composable("total_ventas") {
+                    TotalVentasScreen(navController = navController, viewModel = viewModel)
+                }
+
+                // Detalle de Ventas por Producto
+                composable(
+                    route = "product_sales_detail/{productId}",
+                    arguments = listOf(navArgument("productId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val productId = backStackEntry.arguments?.getInt("productId") ?: -1
+                    ProductSalesDetailScreen(navController, viewModel, productId)
+                }
+
+                // Home
+                composable("home") {
+                    HomeScreen(
+                        viewModel = viewModel,
+                        onLogout = {
+                            navController.navigate("login") {
+                                popUpTo("home") { inclusive = true }
+                            }
+                        },
+                        onCartClick = {
+                            navController.navigate("cart")
+                        },
+                        onTotalSalesClick = {
+                            navController.navigate("total_ventas")
+                        },
+                        onProfileClick = {
+                            navController.navigate("update_profile")
+                        },
+                        onAddProductClick = {
+                            navController.navigate("product_editor/-1")
+                        },
+                        onEditProductClick = { productId ->
+                            navController.navigate("product_editor/$productId")
+                        },
+                        onViewProductSales = { productId ->
+                            navController.navigate("product_sales_detail/$productId")
                         }
-                    },
-                    onRegisterClick = { navController.navigate("register") },
-                    onForgotPassClick = { navController.navigate("forgot_password") } // Nuevo
-                )
-            }
+                    )
+                }
 
-            composable("register") {
-                RegistroScreen(
-                    viewModel = viewModel,
-                    onRegisterSuccess = { email -> 
-                        navController.navigate("verification/$email") 
-                    }
-                )
-            }
+                // Registro
+                composable("register") {
+                    RegistroScreen(
+                        viewModel = viewModel,
+                        onRegisterSuccess = { email ->
+                            navController.navigate("verification/$email")
+                        }
+                    )
+                }
 
-            composable(
-                route = "verification/{email}",
-                arguments = listOf(navArgument("email") { type = NavType.StringType })
-            ) { backStackEntry ->
-                val email = backStackEntry.arguments?.getString("email") ?: ""
-                VerificationScreen(navController, viewModel, email)
-            }
+                // Verificación
+                composable(
+                    route = "verification/{email}",
+                    arguments = listOf(navArgument("email") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val email = backStackEntry.arguments?.getString("email") ?: ""
+                    VerificationScreen(navController, viewModel, email)
+                }
 
-            composable("forgot_password") {
-                ForgotPasswordScreen(navController, viewModel)
-            }
+                // Olvidé mi contraseña
+                composable("forgot_password") {
+                    ForgotPasswordScreen(navController, viewModel)
+                }
 
-            composable("home") {
-                HomeScreen(
-                    viewModel = viewModel,
-                    onLogout = { /* Manejado por la barra */ },
-                    onCartClick = { navController.navigate("cart") },
-                    onProfileClick = { navController.navigate("update_profile") }
-                )
-            }
+                // 🔥 Cart
+                composable(
+                    route = "cart?userId={userId}",
+                    arguments = listOf(navArgument("userId") { type = NavType.IntType; defaultValue = -1 })
+                ) { backStackEntry ->
+                    val userId = backStackEntry.arguments?.getInt("userId") ?: -1
+                    val targetUserId = if (userId != -1) userId else null
+                    CartScreen(
+                        viewModel = viewModel,
+                        onBackToHome = { navController.popBackStack() },
+                        onCheckoutClick = { 
+                            if (isLoggedIn) {
+                                navController.navigate("address_selection") 
+                            } else {
+                                navController.navigate("login")
+                            }
+                        },
+                        targetUserId = targetUserId
+                    )
+                }
 
-            composable("admin_dashboard") { AdminDashboardScreen(navController) }
-            
-            composable("admin_users") { AdminUserManagementScreen(navController, viewModel) }
-            
-            composable("supervisor") {
-                SupervisorScreen(viewModel, onLogout = { viewModel.logout(); navController.navigate("login") })
-            }
+                // Dirección
+                composable(
+                    route = "address_selection?userId={userId}",
+                    arguments = listOf(navArgument("userId") { type = NavType.IntType; defaultValue = -1 })
+                ) { backStackEntry ->
+                    val userId = backStackEntry.arguments?.getInt("userId") ?: -1
+                    val targetUserId = if (userId != -1) userId else null
+                    AddressSelectionScreen(
+                        navController = navController,
+                        viewModel = viewModel,
+                        targetUserId = targetUserId
+                    )
+                }
 
-            composable("add_address") { AddAddressScreen(navController, viewModel) }
+                // Pago
+                composable(
+                    route = "payment/{direccion}",
+                    arguments = listOf(navArgument("direccion") {
+                        type = NavType.StringType
+                    })
+                ) { backStackEntry ->
+                    val direccion =
+                        backStackEntry.arguments?.getString("direccion") ?: ""
 
-            composable(
-                route = "cart?userId={userId}",
-                arguments = listOf(navArgument("userId") { 
-                    type = NavType.IntType
-                    defaultValue = -1 
-                })
-            ) { backStackEntry ->
-                val userId = backStackEntry.arguments?.getInt("userId") ?: -1
-                CartScreen(
-                    viewModel = viewModel,
-                    onBackToHome = { navController.popBackStack() },
-                    onCheckoutClick = { 
-                        if (isLoggedIn) navController.navigate("address_selection") 
-                        else navController.navigate("login")
-                    },
-                    targetUserId = if (userId != -1) userId else null
-                )
-            }
+                    PaymentScreen(
+                        navController = navController,
+                        viewModel = viewModel,
+                        direccion = direccion
+                    )
+                }
 
-            composable(
-                route = "update_profile?userId={userId}",
-                arguments = listOf(navArgument("userId") { 
-                    type = NavType.IntType
-                    defaultValue = -1 
-                })
-            ) { backStackEntry ->
-                val userId = backStackEntry.arguments?.getInt("userId") ?: -1
-                UpdateProfileScreen(navController, viewModel, if (userId != -1) userId else null)
-            }
+                // Confirmación
+                composable(
+                    route = "order_confirmation/{orderNumber}",
+                    arguments = listOf(navArgument("orderNumber") {
+                        type = NavType.StringType
+                    })
+                ) { backStackEntry ->
 
-            composable(
-                route = "address_selection?userId={userId}",
-                arguments = listOf(navArgument("userId") { 
-                    type = NavType.IntType
-                    defaultValue = -1 
-                })
-            ) { backStackEntry ->
-                val userId = backStackEntry.arguments?.getInt("userId") ?: -1
-                AddressSelectionScreen(navController, viewModel, if (userId != -1) userId else null)
-            }
+                    val orderNumber = backStackEntry.arguments?.getString("orderNumber") ?: ""
 
-            composable("payment/{direccion}") { backStackEntry ->
-                val dir = backStackEntry.arguments?.getString("direccion") ?: ""
-                PaymentScreen(navController, viewModel, dir)
-            }
+                    OrderConfirmationScreen(
+                        navController = navController,
+                        orderNumber = orderNumber
+                    )
+                }
 
-            composable("success/{order}") { backStackEntry ->
-                val order = backStackEntry.arguments?.getString("order") ?: ""
-                OrderConfirmationScreen(navController, order)
+                // Perfil
+                composable(
+                    route = "update_profile?userId={userId}",
+                    arguments = listOf(navArgument("userId") { type = NavType.IntType; defaultValue = -1 })
+                ) { backStackEntry ->
+                    val userId = backStackEntry.arguments?.getInt("userId") ?: -1
+                    val targetUserId = if (userId != -1) userId else null
+                    UpdateProfileScreen(
+                        navController = navController,
+                        viewModel = viewModel,
+                        targetUserId = targetUserId
+                    )
+                }
+
+                // Editor de producto
+                composable(
+                    route = "product_editor/{productId}",
+                    arguments = listOf(navArgument("productId") {
+                        type = NavType.IntType
+                    })
+                ) { backStackEntry ->
+                    val productId =
+                        backStackEntry.arguments?.getInt("productId")
+
+                    ProductEditorScreen(
+                        navController = navController,
+                        viewModel = viewModel,
+                        productId = productId
+                    )
+                }
+
+                // Nueva Dirección
+                composable("add_address") {
+                    AddAddressScreen(navController, viewModel)
+                }
             }
         }
     }

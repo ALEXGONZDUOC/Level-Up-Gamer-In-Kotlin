@@ -1,11 +1,6 @@
 package com.example.level_up_gamer_android.model
 
-
-
-
-
 data class Usuario(
-    
     val id: Int = 0,
     val nombre: String,
     val contrasena: String,

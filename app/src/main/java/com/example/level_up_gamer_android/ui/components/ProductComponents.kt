@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -19,13 +21,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.level_up_gamer_android.R
 import com.example.level_up_gamer_android.model.Producto
 import com.example.level_up_gamer_android.utils.getLocalImageResource
 
 @Composable
-fun ProductoCard(producto: Producto, onAddToCart: () -> Unit) {
+fun ProductoCard(
+    producto: Producto, 
+    tipoUsuarioId: Int,
+    onAddToCart: () -> Unit,
+    onEditClick: () -> Unit = {},
+    onDeleteClick: () -> Unit = {},
+    onViewSales: () -> Unit = {}
+) {
     CustomCard(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -77,20 +87,51 @@ fun ProductoCard(producto: Producto, onAddToCart: () -> Unit) {
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.titleMedium
                         )
-                        CustomText(
-                            text = "Stock: ${producto.cantidad}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        val stockColor = if (producto.cantidad < 5) Color.Red else MaterialTheme.colorScheme.onSurface
+                        Column(horizontalAlignment = Alignment.End) {
+                            CustomText(
+                                text = "Stock: ${producto.cantidad}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = stockColor,
+                                fontWeight = if (producto.cantidad < 5) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            CustomButton(
-                text = "Agregar al Carrito",
-                onClick = onAddToCart
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (tipoUsuarioId == 2) { // SOLO Supervisor tiene poderes sobre productos
+                    CustomButton(
+                        text = "Ventas",
+                        onClick = onViewSales,
+                        modifier = Modifier.weight(0.7f)
+                    )
+                    CustomButton(
+                        text = "Editar",
+                        onClick = onEditClick,
+                        modifier = Modifier.weight(0.7f)
+                    )
+                    CustomButton(
+                        text = "Eliminar",
+                        onClick = onDeleteClick,
+                        modifier = Modifier.weight(0.7f)
+                    )
+                } else { // Usuario, Invitado o Admin (el Admin no gestiona productos aquí)
+                    val hayStock = producto.cantidad > 0
+                    CustomButton(
+                        text = if (hayStock) "Agregar al Carrito" else "Agotado",
+                        onClick = onAddToCart,
+                        modifier = Modifier.weight(1f),
+                        enabled = hayStock
+                    )
+                }
+            }
         }
     }
 }
@@ -99,31 +140,43 @@ fun ProductoCard(producto: Producto, onAddToCart: () -> Unit) {
 fun ProductoImage(producto: Producto, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val fullImageUrl = com.example.level_up_gamer_android.utils.getFullImageUrl(producto.imagenUrl)
+    
+    android.util.Log.d("ProductoImage", "Producto: ${producto.nombre}, URL Final: $fullImageUrl")
 
     if (!fullImageUrl.isNullOrEmpty()) {
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(fullImageUrl)
                 .crossfade(true)
+                .listener(
+                    onStart = { android.util.Log.d("Coil", "Iniciando carga: $fullImageUrl") },
+                    onSuccess = { _, _ -> android.util.Log.d("Coil", "Carga exitosa: $fullImageUrl") },
+                    onError = { _, result -> 
+                        android.util.Log.e("Coil", "Error cargando $fullImageUrl: ${result.throwable.message}")
+                        result.throwable.printStackTrace()
+                    }
+                )
                 .build(),
             contentDescription = "Imagen de ${producto.nombre}",
             modifier = modifier,
             contentScale = ContentScale.Crop,
             error = painterResource(id = R.drawable.product_placeholder)
         )
-    } else {
+    } 
+    else {
         val localImageRes = getLocalImageResource(context, producto.codigo)
         if (localImageRes != 0 && localImageRes != R.drawable.product_placeholder) {
             Image(
                 painter = painterResource(id = localImageRes),
-                contentDescription = "Imagen de ${producto.nombre}",
+                contentDescription = "Imagen local de ${producto.nombre}",
                 modifier = modifier,
                 contentScale = ContentScale.Crop
             )
-        } else {
+        } 
+        else {
             Image(
                 painter = painterResource(id = R.drawable.product_placeholder),
-                contentDescription = "Imagen de ${producto.nombre}",
+                contentDescription = "Sin imagen disponible",
                 modifier = modifier,
                 contentScale = ContentScale.Crop
             )

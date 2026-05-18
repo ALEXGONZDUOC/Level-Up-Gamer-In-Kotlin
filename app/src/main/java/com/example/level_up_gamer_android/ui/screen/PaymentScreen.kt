@@ -52,6 +52,7 @@ class DateTransformation : VisualTransformation {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaymentScreen(navController: NavController, viewModel: FormularioViewModel, direccion: String) {
     var cardDigits by remember { mutableStateOf("") }
@@ -59,6 +60,7 @@ fun PaymentScreen(navController: NavController, viewModel: FormularioViewModel, 
     var dateDigits by remember { mutableStateOf("") }
     var cvv by remember { mutableStateOf("") }
     
+    var errorMsg by remember { mutableStateOf<String?>(null) }
     val loading by viewModel.loading.collectAsState()
     val total = viewModel.getTotal()
 
@@ -67,20 +69,23 @@ fun PaymentScreen(navController: NavController, viewModel: FormularioViewModel, 
             modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Título Visual V0.8
             CustomText("Pago y Facturación", fontSize = 24.sp, fontWeight = FontWeight.Bold)
             
+            // Resumen de pedido Estilo V0.8
             CustomCard {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    CustomText("Envío a:", fontWeight = FontWeight.Bold)
+                    CustomText("Envío a:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     CustomText(direccion, style = MaterialTheme.typography.bodySmall)
                     Spacer(modifier = Modifier.height(8.dp))
-                    CustomText("Total a Pagar:", fontWeight = FontWeight.Bold)
-                    CustomText("$${String.format("%.2f", total)}", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp)
+                    CustomText("Total a Pagar:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    CustomText("$${String.format("%.2f", total)}", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Formulario de Tarjeta Estilo V0.8
             OutlinedTextField(
                 value = cardDigits,
                 onValueChange = { cardDigits = it.filter { c -> c.isDigit() }.take(16) },
@@ -88,7 +93,11 @@ fun PaymentScreen(navController: NavController, viewModel: FormularioViewModel, 
                 leadingIcon = { Icon(Icons.Default.CreditCard, null) },
                 visualTransformation = CardNumberTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                )
             )
 
             CustomTextField(nombreTitular, { nombreTitular = it }, "Nombre en la tarjeta")
@@ -100,15 +109,27 @@ fun PaymentScreen(navController: NavController, viewModel: FormularioViewModel, 
                     label = { Text("MM/AA") },
                     visualTransformation = DateTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    )
                 )
                 OutlinedTextField(
                     value = cvv,
                     onValueChange = { cvv = it.filter { c -> c.isDigit() }.take(3) },
                     label = { Text("CVV") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    )
                 )
+            }
+
+            if (errorMsg != null) {
+                CustomText(errorMsg!!, color = Color.Red, fontSize = 14.sp)
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -118,16 +139,20 @@ fun PaymentScreen(navController: NavController, viewModel: FormularioViewModel, 
                 enabled = !loading,
                 onClick = {
                     if (cardDigits.length >= 13 && nombreTitular.isNotBlank() && dateDigits.length == 4 && cvv.length == 3) {
-                        viewModel.finalizarPedido(direccion) { orderId ->
-                            if (orderId != null) {
-                                navController.navigate("success/$orderId") {
+                        viewModel.finalizarPedido(direccion) { orderNum ->
+                            if (orderNum != null) {
+                                navController.navigate("order_confirmation/$orderNum") {
                                     popUpTo("home") { inclusive = false }
                                 }
+                            } else {
+                                errorMsg = "Error al procesar el pago"
                             }
                         }
+                    } else {
+                        errorMsg = "Completa todos los campos correctamente"
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().height(56.dp)
             )
         }
     }

@@ -28,23 +28,50 @@ fun OrderConfirmationScreen(navController: NavController, orderNumber: String) {
                 imageVector = Icons.Default.CheckCircle,
                 contentDescription = null,
                 modifier = Modifier.size(120.dp),
-                tint = Color(0xFF4CAF50)
+                tint = Color(0xFF4CAF50) // Verde éxito V0.8
             )
+            
             Spacer(modifier = Modifier.height(24.dp))
-            CustomText("¡Gracias por tu compra!", fontSize = 28.sp, fontWeight = FontWeight.Bold)
-            CustomText("Tu pedido #$orderNumber ha sido registrado.", fontSize = 16.sp)
-            CustomText("Te hemos enviado un correo de confirmación.", fontSize = 14.sp, color = Color.LightGray)
+            
+            CustomText(
+                text = "¡Gracias por tu compra!", 
+                fontSize = 28.sp, 
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            CustomText(
+                text = "Tu pedido ha sido registrado con éxito.",
+                fontSize = 16.sp
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            CustomText(
+                text = "Número de orden:",
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+            
+            CustomText(
+                text = "#$orderNumber",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.primary
+            )
             
             Spacer(modifier = Modifier.height(48.dp))
             
             CustomButton(
-                text = "Volver al inicio",
+                text = "Volver a la Tienda",
                 onClick = { 
                     navController.navigate("home") {
                         popUpTo("home") { inclusive = true }
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().height(56.dp)
             )
         }
     }

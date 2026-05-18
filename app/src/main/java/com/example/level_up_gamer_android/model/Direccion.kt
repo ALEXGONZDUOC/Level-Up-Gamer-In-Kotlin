@@ -6,8 +6,8 @@ data class Direccion(
     val nombre_etiqueta: String,
     val calle: String,
     val ciudad: String,
-    val referencias: String = "",
-    val latitud: Double,
-    val longitud: Double,
+    val referencias: String? = "",
+    val latitud: Double = 0.0,
+    val longitud: Double = 0.0,
     val es_principal: Boolean = false
 )

@@ -1,13 +1,10 @@
 package com.example.level_up_gamer_android.ui.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -17,69 +14,126 @@ fun AppBottomBar(
     navController: NavController,
     tipoUsuarioId: Int,
     isLoggedIn: Boolean,
-    onLogoutAction: () -> Unit
+    onLogout: () -> Unit
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
-    // Identificar el "Home" de cada rol
+    // Identificar el "Home" de cada rol para la V0.9
     val homeRoute = when (tipoUsuarioId) {
-        1 -> "admin_dashboard"
-        2 -> "supervisor"
+        1 -> "admin_users" // Home del Admin es directamente Usuarios
+        2 -> "total_ventas" // Home del Supervisor es Ventas
         else -> "home"
     }
 
     val isAtHome = currentRoute == homeRoute
+
+    // Diálogo de Confirmación de Logout (Para los 3 roles)
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Cerrar Sesión") },
+            text = { Text("¿Estás seguro de que deseas salir de tu cuenta?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.7f))
+                ) { Text("Salir", color = Color.White) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
         contentColor = MaterialTheme.colorScheme.primary
     ) {
         // --- SECCIÓN IZQUIERDA: FUNCIONES SEGÚN ROL ---
-        when {
-            tipoUsuarioId == 1 && isLoggedIn -> { // ADMIN
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Dashboard, "Panel") },
-                    label = { Text("Panel") },
-                    selected = currentRoute == "admin_dashboard",
-                    onClick = { navController.navigate("admin_dashboard") { popUpTo(0) } }
-                )
+        when (tipoUsuarioId) {
+            1 -> { // ADMIN: Gestión de Usuarios, Tienda y Carrito (para pruebas)
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Group, "Usuarios") },
                     label = { Text("Usuarios") },
                     selected = currentRoute == "admin_users",
-                    onClick = { navController.navigate("admin_users") }
+                    onClick = { 
+                        if (currentRoute != "admin_users") {
+                            navController.navigate("admin_users") {
+                                popUpTo("admin_users") { inclusive = true }
+                            }
+                        }
+                    }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Storefront, "Tienda") },
+                    label = { Text("Tienda") },
+                    selected = currentRoute == "home",
+                    onClick = { if (currentRoute != "home") navController.navigate("home") }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.ShoppingCart, "Carrito") },
+                    label = { Text("Carrito") },
+                    selected = currentRoute?.startsWith("cart") == true,
+                    onClick = { navController.navigate("cart") }
                 )
             }
-            tipoUsuarioId == 2 && isLoggedIn -> { // SUPERVISOR
+            2 -> { // SUPERVISOR: Ventas + Tienda + Agregar
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Assessment, "Ventas") },
                     label = { Text("Ventas") },
-                    selected = currentRoute == "supervisor",
-                    onClick = { navController.navigate("supervisor") { popUpTo(0) } }
+                    selected = currentRoute == "total_ventas",
+                    onClick = { 
+                        if (currentRoute != "total_ventas") {
+                            navController.navigate("total_ventas") {
+                                popUpTo("total_ventas") { inclusive = true }
+                            }
+                        }
+                    }
                 )
-            }
-            else -> { // USUARIO o INVITADO (ID 3 o no logueado)
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, "Tienda") },
+                    icon = { Icon(Icons.Default.Storefront, "Tienda") },
                     label = { Text("Tienda") },
                     selected = currentRoute == "home",
-                    onClick = { navController.navigate("home") { popUpTo(0) } }
+                    onClick = { if (currentRoute != "home") navController.navigate("home") }
                 )
-                // El carro es útil incluso para invitados (local)
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.ShoppingCart, "Carro") },
-                    label = { Text("Carro") },
+                    icon = { Icon(Icons.Default.AddCircle, "Agregar") },
+                    label = { Text("Agregar") },
+                    selected = currentRoute?.startsWith("product_editor") == true,
+                    onClick = { navController.navigate("product_editor/-1") }
+                )
+            }
+            else -> { // USUARIO o INVITADO: Tienda + Carrito
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Storefront, "Tienda") },
+                    label = { Text("Tienda") },
+                    selected = currentRoute == "home",
+                    onClick = { 
+                        if (currentRoute != "home") {
+                            navController.navigate("home") { popUpTo(0) }
+                        }
+                    }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.ShoppingCart, "Carrito") },
+                    label = { Text("Carrito") },
                     selected = currentRoute?.startsWith("cart") == true,
                     onClick = { navController.navigate("cart") }
                 )
             }
         }
 
-        // --- SECCIÓN DERECHA: EL BOTÓN DINÁMICO (VOLVER / PERFIL / SALIR) ---
-        
-        if (!isAtHome) {
-            // 1. SI NO ESTOY EN MI HOME -> BOTÓN VOLVER
+        // --- SECCIÓN DERECHA: BOTÓN DINÁMICO ---
+        // Admin (1) y Supervisor (2) NO tienen botón Volver (tienen sus accesos directos permanentes)
+        if (!isAtHome && currentRoute != "home" && tipoUsuarioId != 1 && tipoUsuarioId != 2) { 
+            // Botón Volver solo para Usuarios (3) si no están en su Home
             NavigationBarItem(
                 icon = { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") },
                 label = { Text("Volver") },
@@ -90,29 +144,37 @@ fun AppBottomBar(
                     }
                 }
             )
-        } else {
-            // 2. SI ESTOY EN MI HOME -> DEPENDE DE SI ESTOY LOGUEADO
+        } else if ((tipoUsuarioId == 3 || !isLoggedIn)) {
+            // Perfil o Login SOLO para usuarios normales o invitados
             if (isLoggedIn) {
-                // USUARIO LOGUEADO -> Botón Perfil (donde está el logout real)
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.AccountCircle, "Perfil") },
+                    icon = { Icon(Icons.Default.Person, "Perfil") },
                     label = { Text("Perfil") },
-                    selected = currentRoute?.startsWith("update_profile") == true,
+                    selected = currentRoute == "update_profile",
                     onClick = { navController.navigate("update_profile") }
                 )
             } else {
-                // INVITADO -> Botón Salir (lo lleva al Login)
                 NavigationBarItem(
-                    icon = { Icon(Icons.AutoMirrored.Filled.Login, "Salir") },
-                    label = { Text("Salir") },
-                    selected = false,
-                    onClick = onLogoutAction,
-                    colors = NavigationBarItemDefaults.colors(
-                        unselectedIconColor = Color.Red.copy(alpha = 0.8f),
-                        unselectedTextColor = Color.Red.copy(alpha = 0.8f)
-                    )
+                    icon = { Icon(Icons.AutoMirrored.Filled.Login, "Login") },
+                    label = { Text("Login") },
+                    selected = currentRoute == "login",
+                    onClick = { navController.navigate("login") }
                 )
             }
+        }
+
+        // BOTÓN SALIR: Siempre visible para Admin/Super, o en Home para User
+        if (isLoggedIn && (tipoUsuarioId == 1 || tipoUsuarioId == 2 || isAtHome)) {
+            NavigationBarItem(
+                icon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, "Salir") },
+                label = { Text("Salir") },
+                selected = false,
+                onClick = { showLogoutDialog = true },
+                colors = NavigationBarItemDefaults.colors(
+                    unselectedIconColor = Color.Red.copy(alpha = 0.7f),
+                    unselectedTextColor = Color.Red.copy(alpha = 0.7f)
+                )
+            )
         }
     }
 }

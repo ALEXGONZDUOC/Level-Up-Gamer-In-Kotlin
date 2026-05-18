@@ -34,8 +34,7 @@ fun CartScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-
-            // Título
+            // Título Visual V0.8 (Sin botón volver, ya está en la barra)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -49,7 +48,8 @@ fun CartScreen(
                 Icon(
                     imageVector = Icons.Default.ShoppingCart,
                     contentDescription = "Carrito",
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -66,15 +66,16 @@ fun CartScreen(
 
             // Carrito vacío
             if (cartItems.isEmpty()) {
-                EmptyCartView()
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CustomText("Tu carrito está vacío", fontSize = 18.sp)
+                }
             } else {
                 // Lista del carrito
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    items(count = cartItems.size) { index ->
-                        val (producto, quantity) = cartItems[index]
+                    items(cartItems) { (producto, quantity) ->
                         CartItemCard(
                             producto = producto,
                             quantity = quantity,
@@ -87,19 +88,35 @@ fun CartScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Totales y acciones
+                // Totales y acciones Visual V0.8
                 CustomCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp)
                     ) {
-                        CustomText(
-                            text = "Total: $${String.format("%.2f", total)}",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            CustomText(text = "Subtotal", fontSize = 16.sp)
+                            CustomText(text = "$${String.format("%.2f", total)}", fontSize = 16.sp)
+                        }
+                        
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            CustomText(text = "Total", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            CustomText(
+                                text = "$${String.format("%.2f", total)}",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                         
                         if (targetUserId == null) {
                             Spacer(modifier = Modifier.height(16.dp))
@@ -110,12 +127,12 @@ fun CartScreen(
                                 CustomButton(
                                     text = "Vaciar",
                                     onClick = { viewModel.clearCart() },
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(0.4f)
                                 )
                                 CustomButton(
-                                    text = "Comprar",
+                                    text = "Finalizar Compra",
                                     onClick = onCheckoutClick,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(0.6f)
                                 )
                             }
                         }

@@ -89,10 +89,14 @@ fun CartItemCard(
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-                IconButton(onClick = onIncrease) {
+                IconButton(
+                    onClick = onIncrease,
+                    enabled = quantity < producto.cantidad
+                ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Aumentar cantidad"
+                        contentDescription = "Aumentar cantidad",
+                        tint = if (quantity < producto.cantidad) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                     )
                 }
                 IconButton(onClick = onRemove) {
@@ -111,6 +115,7 @@ fun CartItemCard(
 fun CartItemImage(producto: Producto, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val localImageRes = getLocalImageResource(context, producto.codigo)
+    val fullImageUrl = com.example.level_up_gamer_android.utils.getFullImageUrl(producto.imagenUrl)
 
     when {
         localImageRes != 0 && localImageRes != R.drawable.product_placeholder ->
@@ -121,10 +126,10 @@ fun CartItemImage(producto: Producto, modifier: Modifier = Modifier) {
                 contentScale = ContentScale.Crop
             )
 
-        !producto.imagenUrl.isNullOrEmpty() ->
+        !fullImageUrl.isNullOrEmpty() ->
             AsyncImage(
                 model = ImageRequest.Builder(context)
-                    .data(producto.imagenUrl)
+                    .data(fullImageUrl)
                     .crossfade(true)
                     .build(),
                 contentDescription = "Imagen de ${producto.nombre}",

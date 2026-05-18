@@ -12,8 +12,13 @@ fun getLocalImageResource(context: Context, codigoProducto: Double): Int {
 
 fun getFullImageUrl(imagenUrl: String?): String? {
     if (imagenUrl.isNullOrEmpty()) return null
-    if (imagenUrl.startsWith("http")) return imagenUrl
+    if (imagenUrl.startsWith("http")) {
+        android.util.Log.d("ImageUtils", "URL Completa detectada: $imagenUrl")
+        return imagenUrl
+    }
     
-    val baseUrl = com.example.level_up_gamer_android.network.RetrofitClient.BASE_URL
-    return "${baseUrl.trimEnd('/')}/${imagenUrl.removePrefix("/")}"
+    val baseUrl = com.example.level_up_gamer_android.data.network.RetrofitClient.BASE_URL
+    val fullUrl = "${baseUrl.trimEnd('/')}/${imagenUrl.removePrefix("/")}"
+    android.util.Log.d("ImageUtils", "URL Relativa formateada: $fullUrl (Original: $imagenUrl)")
+    return fullUrl
 }

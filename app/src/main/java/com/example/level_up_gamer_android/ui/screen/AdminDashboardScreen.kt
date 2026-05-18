@@ -20,7 +20,7 @@ fun AdminDashboardScreen(navController: NavController) {
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = { CustomText("Panel Administrativo") },
+                    title = { CustomText("Panel de Administrador") },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
             }

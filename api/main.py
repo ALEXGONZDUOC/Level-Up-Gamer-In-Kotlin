@@ -8,11 +8,9 @@ import uvicorn
 import os
 import smtplib
 import random
-import string
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
-from datetime import date
 
 load_dotenv()
 
@@ -28,92 +26,92 @@ if not static_path.exists():
 
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 
-# --- UTILIDADES ---
-
-def generar_codigo_6_digitos():
-    return ''.join(random.choices(string.digits, k=6))
-
 # --- CONFIGURACIÓN CORREO ---
 
-def enviar_email(email_destino: str, asunto: str, cuerpo_html: str):
+def enviar_correo_confirmacion(email_destino: str, nombre_comprador: str, pedido_id: int, total: float, detalles: list):
     gmail_user = os.getenv("GMAIL_USER")
     gmail_pass = os.getenv("GMAIL_PASS")
 
     if not gmail_user or not gmail_pass or "tu_correo" in gmail_user:
-        print(f"Error: Credenciales de Gmail no configuradas. No se pudo enviar '{asunto}' a {email_destino}")
+        print("Error: Credenciales de Gmail no configuradas correctamente en .env")
         return
 
+    dias_entrega = random.randint(1, 4)
+    
     msg = MIMEMultipart()
     msg['From'] = f"Level Up Gamer <{gmail_user}>"
     msg['To'] = email_destino
-    msg['Subject'] = asunto
-    msg.attach(MIMEText(cuerpo_html, 'html'))
+    msg['Subject'] = f"Confirmación de Pedido #{pedido_id} - Level Up Gamer"
 
-    try:
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
-            server.starttls()
-            server.login(gmail_user, gmail_pass)
-            server.send_message(msg)
-            print(f"DEBUG: Email '{asunto}' enviado a {email_destino}")
-    except Exception as e:
-        print(f"DEBUG ERROR CORREO: {e}")
+    filas_tabla = ""
+    for d in detalles:
+        filas_tabla += f"""
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">{d['nombre']}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">{d['cantidad']}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${d['precio_unitario']:.2f}</td>
+        </tr>
+        """
 
-def html_template(titulo: str, contenido: str):
-    return f"""
+    html = f"""
     <html>
     <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6;">
         <div style="max-width: 600px; margin: 20px auto; border: 1px solid #ddd; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
             <div style="background-color: #6200EE; color: white; padding: 20px; text-align: center;">
-                <h1 style="margin: 0;">{titulo}</h1>
+                <h1 style="margin: 0;">¡Compra Exitosa!</h1>
             </div>
             <div style="padding: 30px;">
-                {contenido}
+                <p>Hola <strong>{nombre_comprador}</strong>,</p>
+                <p>Gracias por elegir <strong>Level Up Gamer</strong>. Tu pedido ha sido recibido y está siendo procesado.</p>
+                
+                <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <p style="margin: 0;"><strong>Número de Orden:</strong> #{pedido_id}</p>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #6200EE;">
+                            <th style="padding: 10px; text-align: left;">Producto</th>
+                            <th style="padding: 10px; text-align: center;">Cant.</th>
+                            <th style="padding: 10px; text-align: right;">Precio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filas_tabla}
+                    </tbody>
+                </table>
+
+                <div style="text-align: right; margin-top: 20px; font-size: 1.2em;">
+                    <strong>Total: ${total:.2f}</strong>
+                </div>
+
+                <div style="margin-top: 30px; padding: 15px; background-color: #E8F5E9; border-left: 5px solid #4CAF50;">
+                    <p style="margin: 0; color: #2E7D32;">
+                        <strong>🚚 Información de Envío:</strong><br>
+                        Tu pedido llegará en un plazo estimado de <strong>{dias_entrega} {'día' if dias_entrega == 1 else 'días'}</strong> hábiles.
+                    </p>
+                </div>
             </div>
             <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 0.8em; color: #777;">
-                &copy; 2026 Level Up Gamer Store. No respondas a este correo.
+                Este es un correo automático, por favor no respondas a este mensaje.<br>
+                &copy; 2026 Level Up Gamer Store.
             </div>
         </div>
     </body>
     </html>
     """
+    
+    msg.attach(MIMEText(html, 'html'))
 
-def enviar_correo_bienvenida(email_destino: str, nombre: str, codigo: str):
-    contenido = f"""
-        <p>Hola <strong>{nombre}</strong>,</p>
-        <p>¡Bienvenido a la comunidad de <strong>Level Up Gamer</strong>!</p>
-        <p>Para activar tu cuenta, por favor ingresa el siguiente código de verificación en la aplicación:</p>
-        <div style="background-color: #f4f4f9; padding: 20px; text-align: center; font-size: 2em; letter-spacing: 10px; font-weight: bold; color: #6200EE; border-radius: 5px; margin: 20px 0;">
-            {codigo}
-        </div>
-        <p>Si no creaste esta cuenta, puedes ignorar este mensaje.</p>
-    """
-    enviar_email(email_destino, "Verifica tu cuenta - Level Up Gamer", html_template("¡Bienvenido!", contenido))
-
-def enviar_correo_recuperacion(email_destino: str, codigo: str):
-    contenido = f"""
-        <p>Hemos recibido una solicitud para restablecer tu contraseña.</p>
-        <p>Usa el siguiente código de seguridad para continuar con el proceso:</p>
-        <div style="background-color: #FFF3E0; padding: 20px; text-align: center; font-size: 2em; letter-spacing: 10px; font-weight: bold; color: #E65100; border-radius: 5px; margin: 20px 0;">
-            {codigo}
-        </div>
-        <p>Este código es temporal. Si no solicitaste esto, te recomendamos cambiar tu contraseña actual.</p>
-    """
-    enviar_email(email_destino, "Recuperar Contraseña - Level Up Gamer", html_template("Seguridad", contenido))
-
-def enviar_correo_compra(email_destino: str, nombre: str, pedido_id: int, total: float, detalles: list):
-    filas = "".join([f"<tr><td style='padding:10px;border-bottom:1px solid #eee;'>{d['nombre']}</td><td style='text-align:center;'>{d['cantidad']}</td><td style='text-align:right;'>${d['precio_unitario']:.2f}</td></tr>" for d in detalles])
-    contenido = f"""
-        <p>Hola {nombre}, tu pedido <strong>#{pedido_id}</strong> ha sido recibido.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-            <thead><tr style="border-bottom: 2px solid #6200EE;"><th style="text-align:left;">Ítem</th><th>Cant.</th><th style="text-align:right;">Precio</th></tr></thead>
-            <tbody>{filas}</tbody>
-        </table>
-        <p style="text-align:right; font-size: 1.2em;"><strong>Total: ${total:.2f}</strong></p>
-        <div style="padding: 15px; background-color: #E8F5E9; border-left: 5px solid #4CAF50; margin-top: 20px;">
-            🚚 Tu pedido llegará en aprox. <strong>{random.randint(1,4)} días hábiles</strong>.
-        </div>
-    """
-    enviar_email(email_destino, f"Confirmación de Pedido #{pedido_id}", html_template("¡Compra Exitosa!", contenido))
+    try:
+        # Usamos SMTP con STARTTLS para mayor compatibilidad
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(gmail_user, gmail_pass)
+            server.send_message(msg)
+            print(f"DEBUG: Correo enviado a {email_destino}")
+    except Exception as e:
+        print(f"DEBUG ERROR CORREO: {e}")
 
 # --- CONFIGURACIÓN DB ---
 db_config = {
@@ -125,31 +123,25 @@ db_config = {
 }
 
 def get_db_connection():
-    try: return pymysql.connect(**db_config)
-    except: return None
+    try:
+        return pymysql.connect(**db_config)
+    except Exception as e:
+        print(f"Error DB: {e}")
+        return None
 
 # --- MODELOS ---
 
-class RegistroRequest(BaseModel):
+class UsuarioBase(BaseModel):
     nombre: str
     contrasena: str
     email: str
+    tipo_usuario_id: int
+    activo: bool
+    fecha_creacion: str
 
 class LoginRequest(BaseModel):
     nombre: str
     contrasena: str
-
-class VerificationRequest(BaseModel):
-    email: str
-    codigo: str
-
-class RecoveryRequest(BaseModel):
-    email: str
-
-class ResetPasswordRequest(BaseModel):
-    email: str
-    codigo: str
-    nueva_contrasena: str
 
 class ProductoBase(BaseModel):
     codigo: float
@@ -185,66 +177,13 @@ class PedidoRequest(BaseModel):
 @app.get("/usuarios")
 def get_usuarios():
     conn = get_db_connection()
+    if not conn: raise HTTPException(500, "Error DB")
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT id, nombre, email, tipo_usuario_id, activo, verificado, fecha_creacion FROM usuario")
+            cursor.execute("SELECT * FROM usuario")
             data = cursor.fetchall()
-            for u in data: u["activo"] = bool(u["activo"]); u["verificado"] = bool(u["verificado"])
+            for u in data: u["activo"] = bool(u["activo"])
             return data
-    finally: conn.close()
-
-@app.post("/usuarios")
-def registrar_usuario(req: RegistroRequest, background_tasks: BackgroundTasks):
-    conn = get_db_connection()
-    try:
-        codigo = generar_codigo_6_digitos()
-        with conn.cursor() as cursor:
-            query = "INSERT INTO usuario (nombre, contrasena, email, tipo_usuario_id, activo, verificado, codigo_auth, fecha_creacion) VALUES (%s, %s, %s, 3, 1, 0, %s, %s)"
-            cursor.execute(query, (req.nombre, req.contrasena, req.email, codigo, date.today()))
-            conn.commit()
-            background_tasks.add_task(enviar_correo_bienvenida, req.email, req.nombre, codigo)
-            return {"mensaje": "Usuario registrado. Revisa tu correo para verificar la cuenta."}
-    except Exception as e:
-        if "Duplicate entry" in str(e): raise HTTPException(400, "El correo ya está registrado")
-        raise HTTPException(500, str(e))
-    finally: conn.close()
-
-@app.post("/usuarios/verificar")
-def verificar_usuario(req: VerificationRequest):
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT id FROM usuario WHERE email=%s AND codigo_auth=%s", (req.email, req.codigo))
-            if not cursor.fetchone(): raise HTTPException(400, "Código de verificación incorrecto")
-            cursor.execute("UPDATE usuario SET verificado=1, codigo_auth=NULL WHERE email=%s", (req.email,))
-            conn.commit()
-            return {"mensaje": "Cuenta verificada con éxito"}
-    finally: conn.close()
-
-@app.post("/usuarios/recuperar")
-def solicitar_recuperacion(req: RecoveryRequest, background_tasks: BackgroundTasks):
-    conn = get_db_connection()
-    try:
-        codigo = generar_codigo_6_digitos()
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT id FROM usuario WHERE email=%s", (req.email,))
-            if not cursor.fetchone(): return {"mensaje": "Si el correo existe, recibirás un código"}
-            cursor.execute("UPDATE usuario SET codigo_auth=%s WHERE email=%s", (codigo, req.email))
-            conn.commit()
-            background_tasks.add_task(enviar_correo_recuperacion, req.email, codigo)
-            return {"mensaje": "Código de recuperación enviado"}
-    finally: conn.close()
-
-@app.post("/usuarios/reset-password")
-def reset_password(req: ResetPasswordRequest):
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT id FROM usuario WHERE email=%s AND codigo_auth=%s", (req.email, req.codigo))
-            if not cursor.fetchone(): raise HTTPException(400, "Código incorrecto")
-            cursor.execute("UPDATE usuario SET contrasena=%s, codigo_auth=NULL WHERE email=%s", (req.nueva_contrasena, req.email))
-            conn.commit()
-            return {"mensaje": "Contraseña actualizada correctamente"}
     finally: conn.close()
 
 @app.post("/login")
@@ -255,10 +194,32 @@ def login(req: LoginRequest):
             cursor.execute("SELECT * FROM usuario WHERE nombre=%s AND contrasena=%s", (req.nombre, req.contrasena))
             user = cursor.fetchone()
             if not user: raise HTTPException(401, "Credenciales incorrectas")
-            if not user["verificado"]: raise HTTPException(403, "Cuenta no verificada. Revisa tu correo.")
             user["activo"] = bool(user["activo"])
-            user["verificado"] = bool(user["verificado"])
             return user
+    finally: conn.close()
+
+@app.put("/usuarios/{id}")
+def actualizar_usuario(id: int, u: UsuarioBase):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            query = "UPDATE usuario SET nombre=%s, email=%s, contrasena=%s, tipo_usuario_id=%s, activo=%s WHERE id=%s"
+            cursor.execute(query, (u.nombre, u.email, u.contrasena, u.tipo_usuario_id, 1 if u.activo else 0, id))
+            conn.commit()
+            cursor.execute("SELECT * FROM usuario WHERE id=%s", (id,))
+            user = cursor.fetchone()
+            if user: user["activo"] = bool(user["activo"])
+            return user
+    finally: conn.close()
+
+@app.delete("/usuarios/{id}")
+def eliminar_usuario(id: int):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM usuario WHERE id=%s", (id,))
+            conn.commit()
+            return {"mensaje": "Usuario eliminado correctamente"}
     finally: conn.close()
 
 # --- PRODUCTOS ---
@@ -270,6 +231,40 @@ def get_productos():
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM producto")
             return cursor.fetchall()
+    finally: conn.close()
+
+@app.post("/productos")
+def crear_producto(p: ProductoBase):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            query = "INSERT INTO producto (codigo, nombre, categoria, descripcion, precio, cantidad, imagenUrl, imagenLocal) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            cursor.execute(query, (p.codigo, p.nombre, p.categoria, p.descripcion, p.precio, p.cantidad, p.imagenUrl, p.imagenLocal))
+            conn.commit()
+            cursor.execute("SELECT * FROM producto WHERE id=%s", (cursor.lastrowid,))
+            return cursor.fetchone()
+    finally: conn.close()
+
+@app.put("/productos/{id}")
+def editar_producto(id: int, p: ProductoBase):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            query = "UPDATE producto SET codigo=%s, nombre=%s, categoria=%s, descripcion=%s, precio=%s, cantidad=%s, imagenUrl=%s, imagenLocal=%s WHERE id=%s"
+            cursor.execute(query, (p.codigo, p.nombre, p.categoria, p.descripcion, p.precio, p.cantidad, p.imagenUrl, p.imagenLocal, id))
+            conn.commit()
+            cursor.execute("SELECT * FROM producto WHERE id=%s", (id,))
+            return cursor.fetchone()
+    finally: conn.close()
+
+@app.delete("/productos/{id}")
+def eliminar_producto(id: int):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM producto WHERE id=%s", (id,))
+            conn.commit()
+            return {"mensaje": "Eliminado correctamente"}
     finally: conn.close()
 
 # --- DIRECCIONES ---
@@ -316,6 +311,7 @@ def crear_pedido(p: PedidoRequest, background_tasks: BackgroundTasks):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
+            # 0. Obtener info del usuario para el correo
             cursor.execute("SELECT nombre, email FROM usuario WHERE id=%s", (p.usuario_id,))
             user_info = cursor.fetchone()
             if not user_info: raise HTTPException(404, "Usuario no encontrado")
@@ -323,6 +319,7 @@ def crear_pedido(p: PedidoRequest, background_tasks: BackgroundTasks):
             total = 0
             detalles_email = []
             
+            # 1. Validar y calcular
             for d in p.detalles:
                 cursor.execute("SELECT precio, cantidad, nombre FROM producto WHERE id=%s", (d.producto_id,))
                 prod = cursor.fetchone()
@@ -330,27 +327,65 @@ def crear_pedido(p: PedidoRequest, background_tasks: BackgroundTasks):
                 if prod["cantidad"] < d.cantidad: raise HTTPException(400, f"Sin stock para {prod['nombre']}")
                 
                 total += prod["precio"] * d.cantidad
+                
+                # Guardamos info para el correo
                 detalles_email.append({
                     "nombre": prod["nombre"],
                     "cantidad": d.cantidad,
                     "precio_unitario": prod["precio"]
                 })
 
+            # 2. Cabecera
             cursor.execute("INSERT INTO pedidos (usuario_id, total, direccion) VALUES (%s, %s, %s)", (p.usuario_id, total, p.direccion))
             pedido_id = cursor.lastrowid
 
+            # 3. Detalles y ACTUALIZAR COLUMNAS DE PRODUCTO (Stock y Vendidos)
             for d in p.detalles:
-                cursor.execute("INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario) VALUES (%s, %s, %s, (SELECT precio FROM producto WHERE id=%s))", 
-                               (pedido_id, d.producto_id, d.cantidad, d.producto_id))
+                cursor.execute("SELECT precio FROM producto WHERE id=%s", (d.producto_id,))
+                precio = cursor.fetchone()["precio"]
+                
+                cursor.execute("INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario) VALUES (%s, %s, %s, %s)", 
+                               (pedido_id, d.producto_id, d.cantidad, precio))
+                
+                # 🔥 AQUÍ ESTÁ LA MAGIA: Actualiza stock y suma a total_vendido
                 cursor.execute("UPDATE producto SET cantidad = cantidad - %s, total_vendido = total_vendido + %s WHERE id = %s", 
                                (d.cantidad, d.cantidad, d.producto_id))
 
             conn.commit()
-            background_tasks.add_task(enviar_correo_compra, user_info["email"], user_info["nombre"], pedido_id, total, detalles_email)
+
+            # 4. Enviar correo de confirmación (Background)
+            background_tasks.add_task(
+                enviar_correo_confirmacion, 
+                user_info["email"], 
+                user_info["nombre"], 
+                pedido_id, 
+                total, 
+                detalles_email
+            )
+
             return {"pedido_id": pedido_id, "total": total, "mensaje": "Pedido exitoso"}
     except Exception as e:
         if conn: conn.rollback()
         raise HTTPException(400, str(e))
+    finally: conn.close()
+
+@app.get("/pedidos")
+def get_pedidos():
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM pedidos ORDER BY fecha DESC")
+            return cursor.fetchall()
+    finally: conn.close()
+
+@app.get("/pedidos/{pedido_id}/detalles")
+def get_detalles_pedido(pedido_id: int):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            query = "SELECT dp.*, p.nombre as producto_nombre FROM detalle_pedido dp JOIN producto p ON dp.producto_id = p.id WHERE dp.pedido_id = %s"
+            cursor.execute(query, (pedido_id,))
+            return cursor.fetchall()
     finally: conn.close()
 
 # --- ESTADÍSTICAS ---
@@ -377,6 +412,28 @@ def get_ventas_totales(periodo: str):
             res = cursor.fetchone()
             return {"total": float(res["total"])}
     finally: conn.close()
+
+@app.get("/productos/{id}/ventas-por-dia")
+def get_ventas_producto_dia(id: int):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Consulta ultra-precisa: Solo suma la cantidad de detalle_pedido 
+            # filtrando por el producto_id y uniendo con la fecha del pedido.
+            query = """
+                SELECT DATE(pe.fecha) as fecha_v, SUM(dp.cantidad) as total_dia
+                FROM detalle_pedido dp
+                INNER JOIN pedidos pe ON dp.pedido_id = pe.id
+                WHERE dp.producto_id = %s
+                GROUP BY DATE(pe.fecha)
+                ORDER BY fecha_v DESC
+            """
+            cursor.execute(query, (id,))
+            rows = cursor.fetchall()
+            # Convertimos a string la fecha para el JSON
+            return {str(r["fecha_v"]): int(r["total_dia"]) for r in rows}
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=3000)

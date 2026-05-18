@@ -1,5 +1,7 @@
 package com.example.level_up_gamer_android.model
 
+import com.google.gson.annotations.SerializedName
+
 data class Producto(
     val id: Int = 0,
     val codigo: Double,
@@ -7,19 +9,8 @@ data class Producto(
     val categoria: String,
     val descripcion: String,
     val precio: Double,
-    val cantidad: Int,
+    val cantidad: Int, // Este es el STOCK
     val imagenUrl: String? = "",
     val imagenLocal: String? = "product_placeholder",
-    val total_vendido: Int = 0
-)
-
-data class PedidoRequest(
-    val usuario_id: Int,
-    val direccion: String,
-    val detalles: List<ItemPedido>
-)
-
-data class ItemPedido(
-    val producto_id: Int,
-    val cantidad: Int
+    @SerializedName("total_vendido") val total_vendido: Int = 0 // NUEVO: Cantidad real de ventas
 )

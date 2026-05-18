@@ -51,15 +51,23 @@ fun AddressSelectionScreen(
     }
 
     GradientSurface {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+            // Cabecera Visual V0.8
             CustomText(
-                text = if (isTargetingOther) "Direcciones de Usuario ID: $targetUserId" else "Confirmar Entrega",
-                modifier = Modifier.padding(16.dp),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                text = if (isTargetingOther) "Direcciones: Usuario $targetUserId" else "Confirmar Entrega",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
             )
             
-            Box(modifier = Modifier.height(300.dp).fillMaxWidth().padding(horizontal = 16.dp)) {
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Mapa Visual V0.8
+            Surface(
+                modifier = Modifier.height(300.dp).fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+            ) {
                 GoogleMap(
                     modifier = Modifier.fillMaxSize(),
                     cameraPositionState = cameraPositionState
@@ -73,15 +81,21 @@ fun AddressSelectionScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
+            CustomText("Selecciona una dirección", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Selector Horizontal V0.8
             LazyRow(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 item {
                     OutlinedButton(
                         onClick = { navController.navigate("add_address") },
+                        modifier = Modifier.height(48.dp),
                         shape = MaterialTheme.shapes.medium,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                     ) {
@@ -93,7 +107,11 @@ fun AddressSelectionScreen(
                 items(direcciones) { dir ->
                     Button(
                         onClick = { selectedDireccion = dir },
-                        colors = if (selectedDireccion?.id == dir.id) ButtonDefaults.buttonColors() else ButtonDefaults.filledTonalButtonColors(),
+                        modifier = Modifier.height(48.dp),
+                        colors = if (selectedDireccion?.id == dir.id) 
+                            ButtonDefaults.buttonColors() 
+                        else 
+                            ButtonDefaults.filledTonalButtonColors(),
                         shape = MaterialTheme.shapes.medium
                     ) { 
                         Text(dir.nombre_etiqueta) 
@@ -103,23 +121,27 @@ fun AddressSelectionScreen(
 
             Spacer(modifier = Modifier.weight(1f))
             
-            Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (!isTargetingOther) {
-                    CustomButton(
-                        text = "Ir al Pago", 
-                        onClick = {
+            // Acciones Finales V0.8
+            if (!isTargetingOther) {
+                val isAdmin = currentUser?.tipo_usuario_id == 1
+                CustomButton(
+                    text = if (isAdmin) "Flujo verificado (Admin)" 
+                           else if (selectedDireccion != null) "Confirmar y Pagar" 
+                           else "Seleccione Dirección", 
+                    onClick = {
+                        if (!isAdmin) {
                             navController.navigate("payment/${selectedDireccion?.calle}, ${selectedDireccion?.ciudad}")
-                        }, 
-                        enabled = selectedDireccion != null,
-                        modifier = Modifier.weight(1f)
-                    )
-                } else {
-                    CustomButton(
-                        text = "Cerrar", 
-                        onClick = { navController.popBackStack() }, 
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                        }
+                    }, 
+                    enabled = selectedDireccion != null || isAdmin,
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                )
+            } else {
+                CustomButton(
+                    text = "Regresar", 
+                    onClick = { navController.popBackStack() }, 
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                )
             }
         }
     }

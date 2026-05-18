@@ -1,16 +1,23 @@
 package com.example.level_up_gamer_android.ui.components
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
 
 @Composable
@@ -18,101 +25,162 @@ fun LoginForm(
     viewModel: FormularioViewModel,
     onLoginSuccess: () -> Unit,
     onRegisterClick: () -> Unit,
-    onForgotPassClick: () -> Unit
+    onForgotPasswordClick: () -> Unit
 ) {
     var nombre by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
-    var errorMsg by remember { mutableStateOf<String?>(null) }
-    val loading by viewModel.loading.collectAsState()
+    var isLoading by remember { mutableStateOf(false) }
+    val errorMsg by viewModel.error.collectAsState()
 
     Column(
-        modifier = Modifier.padding(32.dp),
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(32.dp)
     ) {
-        CustomText("Bienvenido Gamer", fontSize = 28.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(32.dp))
+        CustomText(
+            text = "Inicio de Sesión",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
 
-        CustomTextField(nombre, { nombre = it }, "Usuario")
-        Spacer(modifier = Modifier.height(16.dp))
-        CustomTextField(contrasena, { contrasena = it }, "Contraseña", isPassword = true)
-        
-        errorMsg?.let {
-            Spacer(modifier = Modifier.height(8.dp))
-            CustomText(it, color = Color.Red, fontSize = 14.sp)
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        CustomButton(
-            text = if (loading) "Entrando..." else "Iniciar Sesión",
-            enabled = !loading && nombre.isNotBlank() && contrasena.isNotBlank(),
-            onClick = {
-                viewModel.login(nombre, contrasena) { success, error ->
-                    if (success) onLoginSuccess()
-                    else errorMsg = error ?: "Error al entrar"
-                }
-            },
+        CustomTextField(
+            value = nombre,
+            onValueChange = { nombre = it },
+            label = "Nombre de usuario",
             modifier = Modifier.fillMaxWidth()
         )
 
-        TextButton(onClick = onForgotPassClick) {
-            Text("¿Olvidaste tu contraseña?", color = Color.White.copy(alpha = 0.7f))
-        }
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("¿No tienes cuenta?", color = Color.White)
-            TextButton(onClick = onRegisterClick) {
-                Text("Regístrate", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-            }
+        CustomTextField(
+            value = contrasena,
+            onValueChange = { contrasena = it },
+            label = "Contraseña",
+            isPassword = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        errorMsg?.let {
+            CustomText(
+                text = it,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+
+        if (isLoading) {
+            CircularProgressIndicator()
+        } else {
+            CustomButton(
+                text = "Iniciar Sesión",
+                onClick = {
+                    isLoading = true
+                    viewModel.login(nombre, contrasena) { success ->
+                        isLoading = false
+                        if (success) {
+                            onLoginSuccess()
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(onClick = onForgotPasswordClick) {
+            CustomText("¿Olvidaste tu contraseña?", color = MaterialTheme.colorScheme.primary)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(onClick = onRegisterClick) {
+            CustomText("¿No tienes una cuenta? Regístrate")
         }
     }
 }
 
 @Composable
-fun RegistroForm(
-    viewModel: FormularioViewModel,
-    onRegisterSuccess: (String) -> Unit
-) {
+fun RegistroForm(viewModel: FormularioViewModel, onRegisterSuccess: (String) -> Unit) {
     var nombre by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
-    var errorMsg by remember { mutableStateOf<String?>(null) }
-    val loading by viewModel.loading.collectAsState()
+    var email by remember { mutableStateOf("") }
+    val mensajeRegistro by viewModel.error.collectAsState()
+    val isLoading by viewModel.loading.collectAsState()
 
     Column(
-        modifier = Modifier.padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(32.dp)
     ) {
-        CustomText("Crear Cuenta", fontSize = 28.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(32.dp))
+        CustomText(
+            text = "Registro de Usuario",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
 
-        CustomTextField(nombre, { nombre = it }, "Nombre de Usuario")
-        Spacer(modifier = Modifier.height(16.dp))
-        CustomTextField(email, { email = it }, "Correo Electrónico")
-        Spacer(modifier = Modifier.height(16.dp))
-        CustomTextField(contrasena, { contrasena = it }, "Contraseña", isPassword = true)
-
-        errorMsg?.let {
-            Spacer(modifier = Modifier.height(8.dp))
-            CustomText(it, color = Color.Red, fontSize = 14.sp)
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        CustomButton(
-            text = if (loading) "Registrando..." else "Registrarse",
-            enabled = !loading && nombre.isNotBlank() && email.contains("@") && contrasena.length >= 6,
-            onClick = {
-                viewModel.agregarUsuario(nombre, contrasena, email) { error ->
-                    if (error == null) onRegisterSuccess(email)
-                    else errorMsg = error
-                }
-            },
+        CustomTextField(
+            value = nombre,
+            onValueChange = { nombre = it },
+            label = "Ingrese nombre de usuario",
             modifier = Modifier.fillMaxWidth()
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        CustomTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = "Ingrese su correo electrónico",
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        CustomTextField(
+            value = contrasena,
+            onValueChange = { contrasena = it },
+            label = "Ingrese su contraseña",
+            isPassword = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (isLoading) {
+            CircularProgressIndicator()
+        } else {
+            CustomButton(
+                text = "Registrar",
+                onClick = {
+                    if (nombre.isNotBlank() && contrasena.isNotBlank() && email.isNotBlank()) {
+                        viewModel.agregarUsuario(nombre, contrasena, email) { error ->
+                            if (error == null) {
+                                onRegisterSuccess(email)
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        mensajeRegistro?.let {
+            CustomText(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 24.dp)
+            )
+        }
     }
 }
 
@@ -124,77 +192,81 @@ fun UpdateProfileForm(
     targetUserId: Int? = null
 ) {
     val currentUser by viewModel.currentUser.collectAsState()
-    val allUsers by viewModel.usuarios.collectAsState()
-    
-    val targetUser = if (targetUserId != null) {
-        allUsers.find { it.id == targetUserId }
+    val userToEdit = if (targetUserId != null) {
+        viewModel.getUsuarioById(targetUserId)
     } else {
         currentUser
     }
-
-    var nombre by remember(targetUser) { mutableStateOf(targetUser?.nombre ?: "") }
-    var email by remember(targetUser) { mutableStateOf(targetUser?.email ?: "") }
+    
+    val mensaje by viewModel.error.collectAsState()
+    
+    var nombre by remember(userToEdit) { mutableStateOf(userToEdit?.nombre ?: "") }
+    var email by remember(userToEdit) { mutableStateOf(userToEdit?.email ?: "") }
     var contrasena by remember { mutableStateOf("") }
-    var mensaje by remember { mutableStateOf("") }
 
     Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .fillMaxWidth()
+            .padding(32.dp)
     ) {
         CustomText(
-            text = if (targetUserId != null) "Editar Perfil (ID: ${targetUser?.id})" else "Mi Perfil",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
+            text = if (targetUserId != null) "Editar Usuario: ${userToEdit?.nombre}" else "Actualizar Perfil",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        CustomTextField(
+            value = nombre,
+            onValueChange = { nombre = it },
+            label = "Nombre de usuario",
+            modifier = Modifier.fillMaxWidth()
+        )
 
-        CustomTextField(nombre, { nombre = it }, "Nombre")
         Spacer(modifier = Modifier.height(16.dp))
-        CustomTextField(email, { email = it }, "Email")
-        Spacer(modifier = Modifier.height(16.dp))
-        CustomTextField(contrasena, { contrasena = it }, "Nueva Contraseña (opcional)", isPassword = true)
 
-        if (mensaje.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
-            CustomText(mensaje, color = Color.Green)
+        CustomTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = "Correo electrónico",
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        CustomTextField(
+            value = contrasena,
+            onValueChange = { contrasena = it },
+            label = "Nueva contraseña (opcional)",
+            isPassword = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        mensaje?.let {
+            CustomText(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
-
         CustomButton(
-            text = "Guardar Cambios",
+            text = "Actualizar",
             onClick = {
-                targetUser?.let {
-                    val updated = it.copy(
+                userToEdit?.let { user ->
+                    val updatedUser = user.copy(
                         nombre = nombre,
                         email = email,
-                        contrasena = if (contrasena.isNotBlank()) contrasena else it.contrasena
+                        contrasena = if (contrasena.isNotBlank()) contrasena else user.contrasena
                     )
-                    viewModel.actualizarUsuario(updated)
-                    mensaje = "¡Actualizado!"
+                    viewModel.actualizarUsuario(updatedUser)
                     onUpdateSuccess()
                 }
             },
             modifier = Modifier.fillMaxWidth()
         )
-
-        if (targetUserId == null) {
-            Spacer(modifier = Modifier.weight(1f))
-            
-            // BOTÓN LOGOUT (Solo para el dueño de la cuenta)
-            Button(
-                onClick = { viewModel.logout() },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.7f)),
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Icon(Icons.AutoMirrored.Filled.ExitToApp, null)
-                Spacer(Modifier.width(8.dp))
-                Text("Cerrar Sesión")
-            }
-        }
     }
 }
