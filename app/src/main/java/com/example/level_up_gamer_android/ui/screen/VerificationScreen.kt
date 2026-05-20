@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.level_up_gamer_android.ui.components.CustomButton
 import com.example.level_up_gamer_android.ui.components.CustomText
+import com.example.level_up_gamer_android.ui.components.CustomTextField
 import com.example.level_up_gamer_android.ui.components.GradientSurface
 import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
 import kotlinx.coroutines.delay
@@ -34,10 +35,10 @@ fun VerificationScreen(navController: NavController, viewModel: FormularioViewMo
             verticalArrangement = Arrangement.Center
         ) {
             CustomText(
-                text = "Verifica tu Cuenta",
+                text = "VERIFICA TU CUENTA",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.tertiary
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -45,28 +46,22 @@ fun VerificationScreen(navController: NavController, viewModel: FormularioViewMo
             CustomText(
                 text = "Hemos enviado un código de 6 dígitos a:\n$email",
                 textAlign = TextAlign.Center,
-                fontSize = 16.sp
+                fontSize = 16.sp,
+                color = Color.White.copy(alpha = 0.8f)
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            OutlinedTextField(
+            CustomTextField(
                 value = codigo,
                 onValueChange = { if (it.length <= 6) codigo = it.filter { c -> c.isDigit() } },
-                label = { Text("Código de 6 dígitos") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                textStyle = LocalTextStyle.current.copy(
-                    textAlign = TextAlign.Center,
-                    fontSize = 24.sp,
-                    letterSpacing = 8.sp
-                ),
-                singleLine = true
+                label = "Código de 6 dígitos",
+                modifier = Modifier.fillMaxWidth()
             )
 
             if (mensaje.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
-                CustomText(text = mensaje, color = if (mensaje.contains("éxito")) Color.Green else Color.Red)
+                CustomText(text = mensaje, color = if (mensaje.contains("éxito")) Color.Green else Color.Yellow)
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -91,7 +86,7 @@ fun VerificationScreen(navController: NavController, viewModel: FormularioViewMo
             )
             
             TextButton(onClick = { navController.popBackStack() }) {
-                Text("Volver al Login", color = Color.White)
+                CustomText("Volver al Login", color = MaterialTheme.colorScheme.primary)
             }
         }
     }

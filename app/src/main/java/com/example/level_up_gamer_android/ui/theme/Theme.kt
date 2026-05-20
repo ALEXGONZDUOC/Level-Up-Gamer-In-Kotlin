@@ -6,21 +6,33 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
+
 private val DarkColorScheme = darkColorScheme(
-    primary = AccentBlue,
-    secondary = AccentMagenta,
+    primary = BlueMedium,
+    onPrimary = Color.White,
+
+    secondary = BlueDeep,
+    onSecondary = Color.White,
+
+    tertiary = PurpleNeon,
+    onTertiary = Color.White,
+
     background = DarkBackground,
-    surface = CardBackground,
-    onPrimary = TextColor,
-    onSecondary = TextColor,
     onBackground = TextColor,
+
+    surface = CardBackground,
     onSurface = TextColor,
+
+    outline = CyanLight,
     error = AccentRed,
-    onError = TextColor
+    onError = Color.White
 )
+
+
 
 @Composable
 fun LevelUpGamerAndroidTheme(
@@ -36,7 +48,7 @@ fun LevelUpGamerAndroidTheme(
             val window = (view.context as Activity).window
             WindowCompat.setDecorFitsSystemWindows(window, false)
             val controller = WindowCompat.getInsetsController(window, view)
-            controller.isAppearanceLightStatusBars = false
+            controller.isAppearanceLightStatusBars = !darkTheme
         }
     }
 

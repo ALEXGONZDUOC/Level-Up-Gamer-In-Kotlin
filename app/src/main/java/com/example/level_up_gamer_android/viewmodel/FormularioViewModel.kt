@@ -22,6 +22,31 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     private val _productos = MutableStateFlow<List<Producto>>(emptyList())
     val productos: StateFlow<List<Producto>> = _productos
 
+    private val _searchText = MutableStateFlow("")
+    val searchText: StateFlow<String> = _searchText
+
+    private val _filteredProductos = MutableStateFlow<List<Producto>>(emptyList())
+    val filteredProductos: StateFlow<List<Producto>> = _filteredProductos
+
+    // ...
+    fun onSearchTextChange(text: String) {
+        _searchText.value = text
+        filtrarProductos()
+    }
+
+    private fun filtrarProductos() {
+        val query = _searchText.value.lowercase()
+        _filteredProductos.value = if (query.isBlank()) {
+            _productos.value
+        } else {
+            _productos.value.filter { 
+                it.nombre.lowercase().contains(query) || 
+                it.categoria.lowercase().contains(query) ||
+                it.descripcion.lowercase().contains(query)
+            }
+        }
+    }
+
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn
 
@@ -72,6 +97,8 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
 
     // --- Admin/Supervisor Methods ---
     fun cargarUsuarios() {
+        if (_currentUser.value?.tipo_usuario_id != 1) return
+        
         viewModelScope.launch {
             _loading.value = true
             try {
@@ -85,6 +112,8 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun adminActualizarUsuario(usuario: Usuario) {
+        if (_currentUser.value?.tipo_usuario_id != 1) return
+
         viewModelScope.launch {
             _loading.value = true
             try {
@@ -99,6 +128,8 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun eliminarUsuario(id: Int) {
+        if (_currentUser.value?.tipo_usuario_id != 1) return
+
         viewModelScope.launch {
             _loading.value = true
             try {
@@ -113,6 +144,9 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun cargarPedidos() {
+        val role = _currentUser.value?.tipo_usuario_id
+        if (role != 1 && role != 2 && role != 3) return
+
         viewModelScope.launch {
             _loading.value = true
             try {
@@ -144,6 +178,9 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun cargarTopProductos() {
+        val role = _currentUser.value?.tipo_usuario_id
+        if (role != 1 && role != 2) return
+
         viewModelScope.launch {
             try {
                 val response = apiService.getTopProductos()
@@ -155,6 +192,9 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun cargarVentasTotales(periodo: String) {
+        val role = _currentUser.value?.tipo_usuario_id
+        if (role != 1 && role != 2) return
+
         viewModelScope.launch {
             try {
                 val response = apiService.getVentasTotales(periodo)
@@ -169,6 +209,9 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun cargarVentasProductoPorDia(productoId: Int) {
+        val role = _currentUser.value?.tipo_usuario_id
+        if (role != 1 && role != 2) return
+
         viewModelScope.launch {
             try {
                 val response = apiService.getVentasProductoPorDia(productoId)
@@ -179,14 +222,23 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    fun getUsuarioById(id: Int): Usuario? = _usuarios.value.find { it.id == id }
+    fun getUsuarioById(id: Int): Usuario? {
+        if (_currentUser.value?.tipo_usuario_id != 1 && _currentUser.value?.id != id) return null
+        return _usuarios.value.find { it.id == id }
+    }
 
     fun cargarDirecciones(usuarioId: Int? = null) {
-        val userId = usuarioId ?: _currentUser.value?.id ?: return
+        val currentUserId = _currentUser.value?.id ?: return
+        val role = _currentUser.value?.tipo_usuario_id
+        
+        // Solo el dueño o Admin pueden cargar direcciones
+        val targetUserId = usuarioId ?: currentUserId
+        if (targetUserId != currentUserId && role != 1) return
+
         viewModelScope.launch {
             _loading.value = true
             try {
-                val response = apiService.getDirecciones(userId)
+                val response = apiService.getDirecciones(targetUserId)
                 if (response.isSuccessful) { _direcciones.value = response.body() ?: emptyList() }
             } catch (e: Exception) { _error.value = "Error al cargar direcciones" }
             finally { _loading.value = false }
@@ -194,6 +246,9 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun agregarDireccion(direccion: Direccion) {
+        val currentUserId = _currentUser.value?.id ?: return
+        if (direccion.usuario_id != currentUserId) return // Solo el dueño
+
         viewModelScope.launch {
             _loading.value = true
             try {
@@ -256,6 +311,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                 if (response.isSuccessful) {
                     val freshList = response.body() ?: emptyList()
                     _productos.value = freshList
+                    filtrarProductos() // Actualizar lista filtrada
                     val currentCart = _cart.value.toMutableMap()
                     val newCart = mutableMapOf<Producto, Int>()
                     freshList.forEach { p ->
@@ -270,6 +326,9 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun crearProducto(producto: Producto) {
+        val role = _currentUser.value?.tipo_usuario_id
+        if (role != 1 && role != 2) return
+
         viewModelScope.launch {
             try {
                 if (apiService.crearProducto(producto).isSuccessful) {
@@ -281,6 +340,9 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun editarProducto(producto: Producto) {
+        val role = _currentUser.value?.tipo_usuario_id
+        if (role != 1 && role != 2) return
+
         viewModelScope.launch {
             try {
                 if (apiService.editarProducto(producto.id, producto).isSuccessful) {
@@ -292,6 +354,9 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun eliminarProducto(id: Int) {
+        val role = _currentUser.value?.tipo_usuario_id
+        if (role != 1 && role != 2) return
+
         viewModelScope.launch {
             try {
                 if (apiService.eliminarProducto(id).isSuccessful) {

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,124 +26,169 @@ import com.google.maps.android.compose.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddressSelectionScreen(
-    navController: NavController, 
+    navController: NavController,
     viewModel: FormularioViewModel,
     targetUserId: Int? = null
 ) {
     val direcciones by viewModel.direcciones.collectAsState()
     val currentUser by viewModel.currentUser.collectAsState()
     val isTargetingOther = targetUserId != null && targetUserId != currentUser?.id
-    
+
     var selectedDireccion by remember { mutableStateOf<Direccion?>(null) }
-    
-    LaunchedEffect(targetUserId) {
-        viewModel.cargarDirecciones(targetUserId)
-    }
+    var showDialog by remember { mutableStateOf(false) }
 
     val santiago = LatLng(-33.4489, -70.6693)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(santiago, 12f)
     }
 
+    LaunchedEffect(targetUserId) {
+        viewModel.cargarDirecciones(targetUserId)
+    }
+
     LaunchedEffect(selectedDireccion) {
         selectedDireccion?.let {
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(LatLng(it.latitud, it.longitud), 15f)
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(
+                LatLng(it.latitud, it.longitud), 15f
+            )
         }
     }
 
     GradientSurface {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            // Cabecera Visual V0.8
-            CustomText(
-                text = if (isTargetingOther) "Direcciones: Usuario $targetUserId" else "Confirmar Entrega",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Mapa Visual V0.8
-            Surface(
-                modifier = Modifier.height(300.dp).fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
-                border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-            ) {
-                GoogleMap(
-                    modifier = Modifier.fillMaxSize(),
-                    cameraPositionState = cameraPositionState
-                ) {
-                    selectedDireccion?.let {
-                        Marker(
-                            state = MarkerState(LatLng(it.latitud, it.longitud)),
-                            title = it.nombre_etiqueta
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            CustomText("Selecciona una dirección", fontSize = 16.sp, fontWeight = FontWeight.Medium)
-            
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Selector Horizontal V0.8
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                item {
-                    OutlinedButton(
-                        onClick = { navController.navigate("add_address") },
-                        modifier = Modifier.height(48.dp),
-                        shape = MaterialTheme.shapes.medium,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null)
-                        Spacer(Modifier.width(4.dp))
-                        Text("Nueva")
-                    }
-                }
-                items(direcciones) { dir ->
-                    Button(
-                        onClick = { selectedDireccion = dir },
-                        modifier = Modifier.height(48.dp),
-                        colors = if (selectedDireccion?.id == dir.id) 
-                            ButtonDefaults.buttonColors() 
-                        else 
-                            ButtonDefaults.filledTonalButtonColors(),
-                        shape = MaterialTheme.shapes.medium
-                    ) { 
-                        Text(dir.nombre_etiqueta) 
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-            
-            // Acciones Finales V0.8
-            if (!isTargetingOther) {
-                val isAdmin = currentUser?.tipo_usuario_id == 1
-                CustomButton(
-                    text = if (isAdmin) "Flujo verificado (Admin)" 
-                           else if (selectedDireccion != null) "Confirmar y Pagar" 
-                           else "Seleccione Dirección", 
-                    onClick = {
-                        if (!isAdmin) {
-                            navController.navigate("payment/${selectedDireccion?.calle}, ${selectedDireccion?.ciudad}")
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                    title = { 
+                        CustomText(
+                            text = if (isTargetingOther) "DIRECCIÓN USUARIO $targetUserId" else "DIRECCIÓN ENVÍO", 
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.tertiary
+                        ) 
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = Color.White)
                         }
-                    }, 
-                    enabled = selectedDireccion != null || isAdmin,
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                    }
                 )
-            } else {
-                CustomButton(
-                    text = "Regresar", 
-                    onClick = { navController.popBackStack() }, 
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
-                )
+            }
+        ) { padding ->
+            Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+                Box(modifier = Modifier.height(250.dp).fillMaxWidth().padding(16.dp)) {
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        GoogleMap(modifier = Modifier.fillMaxSize(), cameraPositionState = cameraPositionState) {
+                            selectedDireccion?.let {
+                                Marker(state = MarkerState(LatLng(it.latitud, it.longitud)), title = it.nombre_etiqueta)
+                            }
+                        }
+                    }
+                }
+
+                CustomText("Tus direcciones", modifier = Modifier.padding(horizontal = 16.dp), fontSize = 18.sp)
+
+                LazyRow(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(direcciones) { dir ->
+                        AddressChip(direccion = dir, isSelected = selectedDireccion?.id == dir.id, onSelect = { selectedDireccion = dir })
+                    }
+                    if (!isTargetingOther) {
+                        item { AddAddressChip { showDialog = true } }
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                if (!isTargetingOther) {
+                    CustomButton(
+                        text = "Continuar",
+                        onClick = {
+                            selectedDireccion?.let { navController.navigate("payment/${it.calle}, ${it.ciudad}") }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(16.dp).padding(bottom = 120.dp),
+                        enabled = selectedDireccion != null
+                    )
+                } else {
+                    CustomButton(
+                        text = "Regresar",
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier.fillMaxWidth().padding(16.dp).padding(bottom = 120.dp)
+                    )
+                }
             }
         }
     }
+
+    if (showDialog) {
+        AddAddressDialog(
+            onDismiss = { showDialog = false },
+            onSave = { nueva ->
+                val userId = targetUserId ?: currentUser?.id ?: 0
+                viewModel.agregarDireccion(nueva.copy(usuario_id = userId, latitud = 0.0, longitud = 0.0))
+                showDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun AddressChip(direccion: Direccion, isSelected: Boolean, onSelect: () -> Unit) {
+    Surface(
+        onClick = onSelect,
+        shape = MaterialTheme.shapes.medium,
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+    ) {
+        Row(Modifier.padding(12.dp)) { CustomText(direccion.nombre_etiqueta) }
+    }
+}
+
+@Composable
+fun AddAddressChip(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+    ) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(4.dp))
+            CustomText("Nueva")
+        }
+    }
+}
+
+@Composable
+fun AddAddressDialog(onDismiss: () -> Unit, onSave: (Direccion) -> Unit) {
+    var etiqueta by remember { mutableStateOf("") }
+    var calle by remember { mutableStateOf("") }
+    var ciudad by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Nueva Dirección") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                CustomTextField(etiqueta, { etiqueta = it }, "Etiqueta (ej: Casa, Trabajo)")
+                CustomTextField(calle, { calle = it }, "Calle y Número")
+                CustomTextField(ciudad, { ciudad = it }, "Ciudad")
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (etiqueta.isNotBlank() && calle.isNotBlank() && ciudad.isNotBlank()) {
+                        onSave(Direccion(usuario_id = 0, nombre_etiqueta = etiqueta, calle = calle, ciudad = ciudad, latitud = 0.0, longitud = 0.0, es_principal = false))
+                    }
+                }
+            ) { Text("Guardar") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
+    )
 }

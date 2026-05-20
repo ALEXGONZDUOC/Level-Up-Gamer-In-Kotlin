@@ -5,13 +5,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.level_up_gamer_android.navigation.AppNavigation
+import com.example.level_up_gamer_android.ui.theme.LevelUpGamerAndroidTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AppNavigation()
+            LevelUpGamerAndroidTheme {
+                AppNavigation()
+            }
         }
     }
 }

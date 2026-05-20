@@ -8,6 +8,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -17,10 +19,20 @@ fun CustomCard(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 0.dp, bottomEnd = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(
+            width = 1.5.dp,
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    Color(0xFF8831E7), // Violeta Neón
+                    Color(0xFF00E5FF)  // Cian Neón
+                )
+            )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF16162B).copy(alpha = 0.85f) // Fondo oscuro gamer con leve transparencia
+        ),
         content = content
     )
 }

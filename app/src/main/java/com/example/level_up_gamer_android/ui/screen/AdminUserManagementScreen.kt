@@ -3,6 +3,7 @@ package com.example.level_up_gamer_android.ui.screen
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,7 +32,14 @@ fun AdminUserManagementScreen(navController: NavController, viewModel: Formulari
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = { CustomText("Admin: Gestión de Usuarios", fontSize = 24.sp, fontWeight = FontWeight.Bold) },
+                    title = { 
+                        CustomText(
+                            "GESTIÓN USUARIOS", 
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.tertiary
+                        ) 
+                    },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
             }
@@ -44,7 +52,6 @@ fun AdminUserManagementScreen(navController: NavController, viewModel: Formulari
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Selector de Usuario Estilo V0.8
                 Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedButton(
                         onClick = { expandedList = true },
@@ -77,37 +84,38 @@ fun AdminUserManagementScreen(navController: NavController, viewModel: Formulari
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Formulario de edición Estilo V0.8
                 selectedUser?.let { user ->
-                    EditUserFormV08(user, viewModel) { updatedUser ->
+                    EditUserForm(user, viewModel) { updatedUser ->
                         viewModel.adminActualizarUsuario(updatedUser)
                         selectedUser = null
                     }
                     
                     Spacer(modifier = Modifier.height(32.dp))
                     
-                    // Acciones de Supervisión Estilo V0.8 (Grid de botones)
-                    CustomText("Acciones Administrativas", style = MaterialTheme.typography.titleMedium)
+                    CustomText("Acciones Administrativas", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             CustomButton(
-                                text = "Ver Carrito",
+                                text = "Carrito",
                                 onClick = { navController.navigate("cart?userId=${user.id}") },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                icon = Icons.Default.ShoppingCart
                             )
                             CustomButton(
-                                text = "Ver Perfil",
+                                text = "Perfil",
                                 onClick = { navController.navigate("update_profile?userId=${user.id}") },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                icon = Icons.Default.Person
                             )
                         }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             CustomButton(
-                                text = "Ver Direcciones",
+                                text = "Direcciones",
                                 onClick = { navController.navigate("address_selection?userId=${user.id}") },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                icon = Icons.Default.LocationOn
                             )
                         }
                     }
@@ -117,36 +125,35 @@ fun AdminUserManagementScreen(navController: NavController, viewModel: Formulari
                     Button(
                         onClick = { viewModel.eliminarUsuario(user.id) },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.7f)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4757)),
                         shape = MaterialTheme.shapes.medium
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Eliminar Cuenta Definitivamente")
+                        Text("Eliminar Cuenta Definitivamente", fontWeight = FontWeight.Bold)
                     }
                 }
+                Spacer(modifier = Modifier.height(120.dp)) // Espacio estándar para saltar la barra
             }
         }
     }
 }
 
 @Composable
-fun EditUserFormV08(user: Usuario, viewModel: FormularioViewModel, onSave: (Usuario) -> Unit) {
+fun EditUserForm(user: Usuario, viewModel: FormularioViewModel, onSave: (Usuario) -> Unit) {
     var tipoUsuarioId by remember(user) { mutableIntStateOf(user.tipo_usuario_id) }
     var activo by remember(user) { mutableStateOf(user.activo) }
     var expandedType by remember { mutableStateOf(false) }
 
-    // Jerarquía correcta: 1:Admin, 2:Supervisor, 3:Usuario
     val tipos = listOf("Admin", "Supervisor", "Usuario")
 
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CustomText("Gestionando cuenta: ${user.nombre}", style = MaterialTheme.typography.titleMedium)
+        CustomText("Gestionando cuenta: ${user.nombre}", style = MaterialTheme.typography.titleMedium, color = Color.White)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Selector de Rol
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(
                 onClick = { expandedType = true },
@@ -179,23 +186,25 @@ fun EditUserFormV08(user: Usuario, viewModel: FormularioViewModel, onSave: (Usua
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Estado de la cuenta
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            CustomText("Estado: ${if (activo) "Cuenta Activa" else "Cuenta Desactivada"}")
+            CustomText("Estado: ${if (activo) "Activa" else "Desactivada"}", color = Color.White)
             Switch(
                 checked = activo,
                 onCheckedChange = { activo = it },
-                colors = SwitchDefaults.colors(checkedThumbColor = Color.Green)
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.Green,
+                    checkedTrackColor = Color.Green.copy(alpha = 0.5f)
+                )
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        CustomButton("Aplicar Cambios de Rol/Estado", onClick = {
+        CustomButton("Aplicar Cambios", onClick = {
             onSave(user.copy(tipo_usuario_id = tipoUsuarioId, activo = activo))
         }, Modifier.fillMaxWidth())
     }

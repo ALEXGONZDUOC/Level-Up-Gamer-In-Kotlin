@@ -35,14 +35,14 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: FormularioView
             verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
         ) {
             CustomText(
-                text = "Recuperar Acceso",
+                text = "RECUPERAR ACCESO",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.tertiary
             )
 
             if (step == 1) {
-                CustomText("Ingresa tu correo para recibir un código de seguridad.")
+                CustomText("Ingresa tu correo para recibir un código de seguridad.", color = Color.White.copy(alpha = 0.8f))
                 CustomTextField(email, { email = it }, "Correo electrónico")
                 
                 CustomButton(
@@ -57,7 +57,7 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: FormularioView
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {
-                CustomText("Ingresa el código de 6 dígitos y tu nueva contraseña.")
+                CustomText("Ingresa el código de 6 dígitos y tu nueva contraseña.", color = Color.White.copy(alpha = 0.8f))
                 CustomTextField(codigo, { if (it.length <= 6) codigo = it }, "Código de 6 dígitos")
                 CustomTextField(nuevaPass, { nuevaPass = it }, "Nueva Contraseña", isPassword = true)
                 
@@ -84,7 +84,7 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: FormularioView
             }
 
             TextButton(onClick = { navController.popBackStack() }) {
-                Text("Volver", color = Color.White)
+                CustomText("Volver", color = MaterialTheme.colorScheme.primary)
             }
         }
     }

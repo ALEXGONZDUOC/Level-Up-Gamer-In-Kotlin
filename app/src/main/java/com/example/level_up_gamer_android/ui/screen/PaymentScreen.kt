@@ -3,7 +3,7 @@ package com.example.level_up_gamer_android.ui.screen
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,9 +17,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.level_up_gamer_android.ui.components.*
 import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
+import com.example.level_up_gamer_android.utils.format3
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  TRANSFORMACIONES VISUALES
+//  TRANSFORMACIONES VISUALES (Portadas de V0.9 para estabilidad)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class CardNumberTransformation : VisualTransformation {
@@ -54,106 +55,153 @@ class DateTransformation : VisualTransformation {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PaymentScreen(navController: NavController, viewModel: FormularioViewModel, direccion: String) {
+fun PaymentScreen(
+    navController: NavController,
+    viewModel: FormularioViewModel,
+    direccion: String
+) {
     var cardDigits by remember { mutableStateOf("") }
     var nombreTitular by remember { mutableStateOf("") }
     var dateDigits by remember { mutableStateOf("") }
     var cvv by remember { mutableStateOf("") }
-    
     var errorMsg by remember { mutableStateOf<String?>(null) }
     val loading by viewModel.loading.collectAsState()
     val total = viewModel.getTotal()
 
     GradientSurface {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Título Visual V0.8
-            CustomText("Pago y Facturación", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            
-            // Resumen de pedido Estilo V0.8
-            CustomCard {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    CustomText("Envío a:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    CustomText(direccion, style = MaterialTheme.typography.bodySmall)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    CustomText("Total a Pagar:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    CustomText("$${String.format("%.2f", total)}", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                    title = { 
+                        Text(
+                            text = "PAGO", 
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.tertiary
+                        ) 
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = Color.White)
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier.padding(padding).padding(16.dp).fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                CustomCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        CustomText(
+                            text = "Total a Pagar: $${total.format3()}",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CustomText(text = "Dirección: $direccion", style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // Formulario de Tarjeta Estilo V0.8
-            OutlinedTextField(
-                value = cardDigits,
-                onValueChange = { cardDigits = it.filter { c -> c.isDigit() }.take(16) },
-                label = { Text("Número de tarjeta") },
-                leadingIcon = { Icon(Icons.Default.CreditCard, null) },
-                visualTransformation = CardNumberTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                )
-            )
-
-            CustomTextField(nombreTitular, { nombreTitular = it }, "Nombre en la tarjeta")
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // CAMPO NÚMERO DE TARJETA (Usando Outlined para soportar VisualTransformation correctamente)
                 OutlinedTextField(
-                    value = dateDigits,
-                    onValueChange = { dateDigits = it.filter { c -> c.isDigit() }.take(4) },
-                    label = { Text("MM/AA") },
-                    visualTransformation = DateTransformation(),
+                    value = cardDigits,
+                    onValueChange = { cardDigits = it.filter { c -> c.isDigit() }.take(16) },
+                    label = { Text("Número de tarjeta", color = Color.White.copy(alpha = 0.7f)) },
+                    visualTransformation = CardNumberTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        cursorColor = MaterialTheme.colorScheme.primary
                     )
                 )
-                OutlinedTextField(
-                    value = cvv,
-                    onValueChange = { cvv = it.filter { c -> c.isDigit() }.take(3) },
-                    label = { Text("CVV") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                    )
+
+                CustomTextField(
+                    value = nombreTitular,
+                    onValueChange = { nombreTitular = it },
+                    label = "Nombre del titular"
                 )
-            }
 
-            if (errorMsg != null) {
-                CustomText(errorMsg!!, color = Color.Red, fontSize = 14.sp)
-            }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // CAMPO FECHA EXP
+                    OutlinedTextField(
+                        value = dateDigits,
+                        onValueChange = { dateDigits = it.filter { c -> c.isDigit() }.take(4) },
+                        label = { Text("MM/AA", color = Color.White.copy(alpha = 0.7f)) },
+                        visualTransformation = DateTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            cursorColor = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                    
+                    // CAMPO CVV
+                    OutlinedTextField(
+                        value = cvv,
+                        onValueChange = { cvv = it.filter { c -> c.isDigit() }.take(3) },
+                        label = { Text("CVV", color = Color.White.copy(alpha = 0.7f)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            cursorColor = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                }
 
-            Spacer(modifier = Modifier.weight(1f))
+                errorMsg?.let {
+                    CustomText(text = it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
+                }
 
-            CustomButton(
-                text = if (loading) "Procesando Pedido..." else "Confirmar Pago",
-                enabled = !loading,
-                onClick = {
-                    if (cardDigits.length >= 13 && nombreTitular.isNotBlank() && dateDigits.length == 4 && cvv.length == 3) {
+                Spacer(modifier = Modifier.weight(1f))
+
+                CustomButton(
+                    text = if (loading) "Procesando..." else "Pagar Ahora",
+                    onClick = {
+                        val isValid = cardDigits.length >= 13 &&
+                                    nombreTitular.isNotBlank() &&
+                                    dateDigits.length == 4 &&
+                                    cvv.length == 3
+
+                        if (!isValid) {
+                            errorMsg = "Completa correctamente los datos"
+                            return@CustomButton
+                        }
+                        errorMsg = null
                         viewModel.finalizarPedido(direccion) { orderNum ->
                             if (orderNum != null) {
                                 navController.navigate("order_confirmation/$orderNum") {
-                                    popUpTo("home") { inclusive = false }
+                                    popUpTo("cart") { inclusive = true }
                                 }
                             } else {
                                 errorMsg = "Error al procesar el pago"
                             }
                         }
-                    } else {
-                        errorMsg = "Completa todos los campos correctamente"
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().height(56.dp)
-            )
+                    },
+                    modifier = Modifier.padding(bottom = 120.dp),
+                    enabled = !loading
+                )
+            }
         }
     }
 }

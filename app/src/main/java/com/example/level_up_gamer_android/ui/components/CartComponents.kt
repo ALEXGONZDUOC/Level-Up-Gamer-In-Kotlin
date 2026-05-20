@@ -30,6 +30,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.level_up_gamer_android.R
 import com.example.level_up_gamer_android.model.Producto
+import com.example.level_up_gamer_android.utils.format3
 import com.example.level_up_gamer_android.utils.getLocalImageResource
 
 @Composable
@@ -63,14 +64,16 @@ fun CartItemCard(
                     fontSize = 16.sp
                 )
                 CustomText(
-                    text = "$${producto.precio}",
+                    text = "$${producto.precio.format3()}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
                 CustomText(
-                    text = "Subtotal: $${String.format("%.2f", producto.precio * quantity)}",
-                    style = MaterialTheme.typography.bodySmall
+                    text = "Subtotal: $${(producto.precio * quantity).format3()}",
+                    style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
                 )
+
             }
 
             // Botones
@@ -96,7 +99,10 @@ fun CartItemCard(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Aumentar cantidad",
-                        tint = if (quantity < producto.cantidad) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                        tint = if (quantity < producto.cantidad)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.outline
                     )
                 }
                 IconButton(onClick = onRemove) {
@@ -115,7 +121,6 @@ fun CartItemCard(
 fun CartItemImage(producto: Producto, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val localImageRes = getLocalImageResource(context, producto.codigo)
-    val fullImageUrl = com.example.level_up_gamer_android.utils.getFullImageUrl(producto.imagenUrl)
 
     when {
         localImageRes != 0 && localImageRes != R.drawable.product_placeholder ->
@@ -126,10 +131,10 @@ fun CartItemImage(producto: Producto, modifier: Modifier = Modifier) {
                 contentScale = ContentScale.Crop
             )
 
-        !fullImageUrl.isNullOrEmpty() ->
+        producto.imagenUrl?.isNotEmpty() == true ->
             AsyncImage(
                 model = ImageRequest.Builder(context)
-                    .data(fullImageUrl)
+                    .data(producto.imagenUrl)
                     .crossfade(true)
                     .build(),
                 contentDescription = "Imagen de ${producto.nombre}",
@@ -177,3 +182,4 @@ fun EmptyCartView() {
         )
     }
 }
+

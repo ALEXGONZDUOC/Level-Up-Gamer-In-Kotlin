@@ -1,16 +1,14 @@
 package com.example.level_up_gamer_android.ui.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,10 +19,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.level_up_gamer_android.R
 import com.example.level_up_gamer_android.model.Producto
+import com.example.level_up_gamer_android.utils.format3
 import com.example.level_up_gamer_android.utils.getLocalImageResource
 
 @Composable
@@ -58,23 +56,21 @@ fun ProductoCard(
                     CustomText(
                         text = producto.nombre,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
+                        fontSize = 20.sp,
+                        color = Color.White
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    CustomText(
-                        text = "Código: ${producto.codigo}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
+
                     CustomText(
                         text = "Categoría: ${producto.categoria}",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     CustomText(
                         text = producto.descripcion,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.8f)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
@@ -82,20 +78,18 @@ fun ProductoCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         CustomText(
-                            text = "Precio: $${producto.precio}",
+                            text = "Precio: $${producto.precio.format3()}",
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.titleMedium
                         )
-                        val stockColor = if (producto.cantidad < 5) Color.Red else MaterialTheme.colorScheme.onSurface
-                        Column(horizontalAlignment = Alignment.End) {
-                            CustomText(
-                                text = "Stock: ${producto.cantidad}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = stockColor,
-                                fontWeight = if (producto.cantidad < 5) FontWeight.Bold else FontWeight.Normal
-                            )
-                        }
+                        val stockColor = if (producto.cantidad < 5) Color.Red else Color.White
+                        CustomText(
+                            text = "Stock: ${producto.cantidad}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = stockColor,
+                            fontWeight = if (producto.cantidad < 5) FontWeight.Bold else FontWeight.Normal
+                        )
                     }
                 }
             }
@@ -110,25 +104,37 @@ fun ProductoCard(
                     CustomButton(
                         text = "Ventas",
                         onClick = onViewSales,
-                        modifier = Modifier.weight(0.7f)
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Default.Assessment
                     )
                     CustomButton(
                         text = "Editar",
                         onClick = onEditClick,
-                        modifier = Modifier.weight(0.7f)
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Outlined.EditNote
                     )
                     CustomButton(
                         text = "Eliminar",
                         onClick = onDeleteClick,
-                        modifier = Modifier.weight(0.7f)
-                    )
-                } else { // Usuario, Invitado o Admin (el Admin no gestiona productos aquí)
-                    val hayStock = producto.cantidad > 0
-                    CustomButton(
-                        text = if (hayStock) "Agregar al Carrito" else "Agotado",
-                        onClick = onAddToCart,
                         modifier = Modifier.weight(1f),
-                        enabled = hayStock
+                        icon = Icons.Outlined.Delete
+                    )
+                } else {
+                    val hayStock = producto.cantidad > 0
+                    var count by remember { mutableIntStateOf(0) }
+                    
+                    CustomButton(
+                        text = if (hayStock) "Agregar" else "Agotado",
+                        onClick = {
+                            if (hayStock) {
+                                count++
+                                onAddToCart()
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        enabled = hayStock,
+                        icon = Icons.Default.ShoppingCart,
+                        count = count
                     )
                 }
             }
@@ -141,22 +147,9 @@ fun ProductoImage(producto: Producto, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val fullImageUrl = com.example.level_up_gamer_android.utils.getFullImageUrl(producto.imagenUrl)
     
-    android.util.Log.d("ProductoImage", "Producto: ${producto.nombre}, URL Final: $fullImageUrl")
-
     if (!fullImageUrl.isNullOrEmpty()) {
         AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(fullImageUrl)
-                .crossfade(true)
-                .listener(
-                    onStart = { android.util.Log.d("Coil", "Iniciando carga: $fullImageUrl") },
-                    onSuccess = { _, _ -> android.util.Log.d("Coil", "Carga exitosa: $fullImageUrl") },
-                    onError = { _, result -> 
-                        android.util.Log.e("Coil", "Error cargando $fullImageUrl: ${result.throwable.message}")
-                        result.throwable.printStackTrace()
-                    }
-                )
-                .build(),
+            model = ImageRequest.Builder(context).data(fullImageUrl).crossfade(true).build(),
             contentDescription = "Imagen de ${producto.nombre}",
             modifier = modifier,
             contentScale = ContentScale.Crop,
@@ -165,21 +158,10 @@ fun ProductoImage(producto: Producto, modifier: Modifier = Modifier) {
     } 
     else {
         val localImageRes = getLocalImageResource(context, producto.codigo)
-        if (localImageRes != 0 && localImageRes != R.drawable.product_placeholder) {
-            Image(
-                painter = painterResource(id = localImageRes),
-                contentDescription = "Imagen local de ${producto.nombre}",
-                modifier = modifier,
-                contentScale = ContentScale.Crop
-            )
-        } 
-        else {
-            Image(
-                painter = painterResource(id = R.drawable.product_placeholder),
-                contentDescription = "Sin imagen disponible",
-                modifier = modifier,
-                contentScale = ContentScale.Crop
-            )
+        if (localImageRes != 0) {
+            Image(painter = painterResource(id = localImageRes), contentDescription = null, modifier = modifier, contentScale = ContentScale.Crop)
+        } else {
+            Image(painter = painterResource(id = R.drawable.product_placeholder), contentDescription = null, modifier = modifier, contentScale = ContentScale.Crop)
         }
     }
 }

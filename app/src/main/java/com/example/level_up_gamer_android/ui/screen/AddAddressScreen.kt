@@ -5,12 +5,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.level_up_gamer_android.model.Direccion
 import com.example.level_up_gamer_android.ui.components.CustomButton
+import com.example.level_up_gamer_android.ui.components.CustomText
 import com.example.level_up_gamer_android.ui.components.CustomTextField
 import com.example.level_up_gamer_android.ui.components.GradientSurface
 import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
@@ -32,12 +34,12 @@ fun AddAddressScreen(navController: NavController, viewModel: FormularioViewMode
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Nueva Dirección",
-                fontSize = 24.sp,
+            CustomText(
+                text = "NUEVA DIRECCIÓN",
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 8.dp)
+                color = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
 
             CustomTextField(
@@ -86,6 +88,12 @@ fun AddAddressScreen(navController: NavController, viewModel: FormularioViewMode
                         navController.popBackStack()
                     }
                 },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            CustomButton(
+                text = "Cancelar",
+                onClick = { navController.popBackStack() },
                 modifier = Modifier.fillMaxWidth()
             )
         }

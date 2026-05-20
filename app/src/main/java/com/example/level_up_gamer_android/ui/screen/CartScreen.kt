@@ -6,16 +6,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.level_up_gamer_android.ui.components.*
 import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
+import com.example.level_up_gamer_android.utils.format3
 
 @Composable
 fun CartScreen(
@@ -34,43 +34,60 @@ fun CartScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Título Visual V0.8 (Sin botón volver, ya está en la barra)
+            // 🧾 HEADER (Model Look)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 CustomText(
-                    text = "Mi Carrito",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "CARRITO",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.tertiary
                 )
                 Icon(
                     imageVector = Icons.Default.ShoppingCart,
-                    contentDescription = "Carrito",
+                    contentDescription = null,
                     modifier = Modifier.size(32.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             if (targetUserId != null) {
                 val targetUser = viewModel.getUsuarioById(targetUserId)
                 CustomText(
-                    text = "Viendo carrito de: ${targetUser?.nombre ?: "Usuario $targetUserId"}",
+                    text = "Gestionando carrito de: ${targetUser?.nombre ?: "Usuario $targetUserId"}",
                     color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
 
-            // Carrito vacío
             if (cartItems.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CustomText("Tu carrito está vacío", fontSize = 18.sp)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(bottom = 120.dp) // Alineación centrada real evitando la barra
+                    ) {
+                        Icon(
+                            Icons.Default.ShoppingCart,
+                            contentDescription = null,
+                            modifier = Modifier.size(80.dp),
+                            tint = Color.White.copy(alpha = 0.2f)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        CustomText(
+                            text = "Tu carrito está vacío", 
+                            fontSize = 20.sp,
+                            color = Color.White.copy(alpha = 0.5f),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             } else {
-                // Lista del carrito
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.weight(1f)
@@ -88,36 +105,23 @@ fun CartScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Totales y acciones Visual V0.8
                 CustomCard(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 140.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            CustomText(text = "Subtotal", fontSize = 16.sp)
-                            CustomText(text = "$${String.format("%.2f", total)}", fontSize = 16.sp)
-                        }
-                        
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            CustomText(text = "Total", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            CustomText(text = "Total:", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                             CustomText(
-                                text = "$${String.format("%.2f", total)}",
+                                text = "$${total.format3()}",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
-                        
+
                         if (targetUserId == null) {
                             Spacer(modifier = Modifier.height(16.dp))
                             Row(
@@ -127,12 +131,12 @@ fun CartScreen(
                                 CustomButton(
                                     text = "Vaciar",
                                     onClick = { viewModel.clearCart() },
-                                    modifier = Modifier.weight(0.4f)
+                                    modifier = Modifier.weight(1f)
                                 )
                                 CustomButton(
-                                    text = "Finalizar Compra",
+                                    text = "Comprar",
                                     onClick = onCheckoutClick,
-                                    modifier = Modifier.weight(0.6f)
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
                         }

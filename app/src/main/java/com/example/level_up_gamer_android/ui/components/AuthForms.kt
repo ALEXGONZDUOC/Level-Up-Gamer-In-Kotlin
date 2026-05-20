@@ -1,20 +1,8 @@
 package com.example.level_up_gamer_android.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -39,10 +27,11 @@ fun LoginForm(
             .fillMaxWidth()
             .padding(32.dp)
     ) {
-        CustomText(
+        Text(
             text = "Inicio de Sesión",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(bottom = 24.dp),
+            color = MaterialTheme.colorScheme.tertiary
         )
 
         CustomTextField(
@@ -120,10 +109,11 @@ fun RegistroForm(viewModel: FormularioViewModel, onRegisterSuccess: (String) -> 
             .fillMaxWidth()
             .padding(32.dp)
     ) {
-        CustomText(
+        Text(
             text = "Registro de Usuario",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(bottom = 24.dp),
+            color = MaterialTheme.colorScheme.tertiary
         )
 
         CustomTextField(
@@ -211,10 +201,11 @@ fun UpdateProfileForm(
             .fillMaxWidth()
             .padding(32.dp)
     ) {
-        CustomText(
+        Text(
             text = if (targetUserId != null) "Editar Usuario: ${userToEdit?.nombre}" else "Actualizar Perfil",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(bottom = 24.dp),
+            color = MaterialTheme.colorScheme.tertiary
         )
 
         CustomTextField(

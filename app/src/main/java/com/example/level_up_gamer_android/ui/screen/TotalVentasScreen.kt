@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +19,7 @@ import com.example.level_up_gamer_android.model.Producto
 import com.example.level_up_gamer_android.ui.components.CustomText
 import com.example.level_up_gamer_android.ui.components.GradientSurface
 import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
+import com.example.level_up_gamer_android.utils.format3
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,9 +29,9 @@ fun TotalVentasScreen(navController: NavController, viewModel: FormularioViewMod
     val topUsuario by viewModel.usuarioTopVentas.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.cargarUsuarios() // Para tener los nombres
+        viewModel.cargarUsuarios()
         viewModel.cargarTopProductos()
-        viewModel.cargarPedidos() // Esto dispara el cálculo del usuario top
+        viewModel.cargarPedidos()
         viewModel.cargarVentasTotales("dia")
         viewModel.cargarVentasTotales("semana")
         viewModel.cargarVentasTotales("mes")
@@ -39,36 +42,41 @@ fun TotalVentasScreen(navController: NavController, viewModel: FormularioViewMod
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = { CustomText("Estadísticas de Ventas") },
+                    title = { 
+                        CustomText(
+                            text = "ESTADÍSTICAS VENTAS", 
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.tertiary
+                        ) 
+                    },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
             }
         ) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState())) {
-                // RESUMEN ARRIBA
-                CustomText("Resumen de Ventas", style = MaterialTheme.typography.headlineSmall)
+                CustomText("RESUMEN DE VENTAS", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(16.dp))
-                VentaRow("Ventas del Día", ventasTotales["dia"] ?: 0.0)
-                VentaRow("Ventas de la Semana", ventasTotales["semana"] ?: 0.0)
-                VentaRow("Ventas del Mes", ventasTotales["mes"] ?: 0.0)
+                VentaRow("Hoy", ventasTotales["dia"] ?: 0.0)
+                VentaRow("Esta Semana", ventasTotales["semana"] ?: 0.0)
+                VentaRow("Este Mes", ventasTotales["mes"] ?: 0.0)
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // TOP USUARIO
                 topUsuario?.let { user ->
-                    CustomText("Cliente con más compras", style = MaterialTheme.typography.headlineSmall)
+                    CustomText("CLIENTE TOP", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.height(16.dp))
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text(user.nombre, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.White)
+                            CustomText(user.nombre, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.White)
                             Spacer(modifier = Modifier.height(8.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Total Compras: ${user.totalCompras}", color = Color.LightGray)
-                                Text("Valor Total: $${String.format("%.2f", user.valorTotal)}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                CustomText("Total Compras: ${user.totalCompras}", color = Color.LightGray)
+                                CustomText("Valor Total: $${user.valorTotal.format3()}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
@@ -76,13 +84,13 @@ fun TotalVentasScreen(navController: NavController, viewModel: FormularioViewMod
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // RANKING COMPLETO
-                CustomText("Ranking de Productos", style = MaterialTheme.typography.headlineSmall)
+                CustomText("RANKING DE PRODUCTOS", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(16.dp))
                 top5.forEachIndexed { index, producto ->
                     ProductoCardSimplified(index + 1, producto)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
+                Spacer(modifier = Modifier.height(120.dp)) // Espacio estándar para saltar la barra
             }
         }
     }
@@ -92,17 +100,17 @@ fun TotalVentasScreen(navController: NavController, viewModel: FormularioViewMod
 fun ProductoCardSimplified(rank: Int, producto: Producto) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.1f)),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f)),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("#$rank", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            CustomText("#$rank", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(producto.nombre, fontWeight = FontWeight.Bold, color = Color.White)
-                Text("Precio: $${producto.precio}", color = Color.LightGray)
+                CustomText(producto.nombre, fontWeight = FontWeight.Bold, color = Color.White)
+                CustomText("Precio: $${producto.precio.format3()}", color = Color.LightGray)
             }
-            Text("Vendidos: ${producto.total_vendido}", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+            CustomText("${producto.total_vendido} VENDIDOS", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
         }
     }
 }
@@ -110,7 +118,7 @@ fun ProductoCardSimplified(rank: Int, producto: Producto) {
 @Composable
 fun VentaRow(label: String, total: Double) {
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, color = Color.White)
-        Text("$${String.format("%.2f", total)}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        CustomText(label, color = Color.White)
+        CustomText("$${total.format3()}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
     }
 }
