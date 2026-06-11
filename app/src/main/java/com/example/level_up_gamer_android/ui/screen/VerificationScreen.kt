@@ -40,9 +40,9 @@ fun VerificationScreen(navController: NavController, viewModel: FormularioViewMo
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.tertiary
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             CustomText(
                 text = "Hemos enviado un código de 6 dígitos a:\n$email",
                 textAlign = TextAlign.Center,
@@ -59,9 +59,19 @@ fun VerificationScreen(navController: NavController, viewModel: FormularioViewMo
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // 🌟 EL NUEVO CÓDIGO OPTIMIZADO VA JUSTO AQUÍ:
             if (mensaje.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
-                CustomText(text = mensaje, color = if (mensaje.contains("éxito")) Color.Green else Color.Yellow)
+
+                // Evaluamos si el mensaje denota éxito o error para cambiar entre verde cian o amarillo neón
+                val esExito = mensaje.contains("éxito", ignoreCase = true) || mensaje.contains("correctamente", ignoreCase = true)
+
+                CustomText(
+                    text = mensaje,
+                    color = if (esExito) Color.Green else Color.Yellow,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center
+                )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -84,7 +94,7 @@ fun VerificationScreen(navController: NavController, viewModel: FormularioViewMo
                 },
                 modifier = Modifier.fillMaxWidth()
             )
-            
+
             TextButton(onClick = { navController.popBackStack() }) {
                 CustomText("Volver al Login", color = MaterialTheme.colorScheme.primary)
             }

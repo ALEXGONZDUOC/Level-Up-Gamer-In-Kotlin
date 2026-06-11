@@ -395,16 +395,56 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun agregarUsuario(nombre: String, contrasena: String, email: String, onResult: (String?) -> Unit) {
-        val nuevo = Usuario(nombre=nombre, contrasena=contrasena, email=email, tipo_usuario_id=3, activo=true, fecha_creacion=LocalDate.now().toString())
+        val nuevo = Usuario(
+            nombre = nombre,
+            contrasena = contrasena,
+            email = email,
+            tipo_usuario_id = 3,
+            activo = true,
+            fecha_creacion = LocalDate.now().toString()
+        )
+
         viewModelScope.launch {
             _loading.value = true
             try {
-                if (apiService.registrarUsuario(nuevo).isSuccessful) {
+                val response = apiService.registrarUsuario(nuevo)
+
+                if (response.isSuccessful) {
                     _error.value = "Registro exitoso"
-                    onResult(null)
-                } else { onResult("Error al registrar") }
-            } catch (e: Exception) { onResult(e.localizedMessage) }
-            finally { _loading.value = false }
+                    onResult(null) // Éxito total
+                } else {
+                    // 🔍 Extraemos el cuerpo del error enviado por FastAPI
+                    val errorBody = response.errorBody()?.string()
+
+                    // Intentamos capturar si el backend especificó el problema en el mensaje
+                    val mensajeError = when {
+                        errorBody == null -> "Error al registrar"
+                        errorBody.contains("email", ignoreCase = true) || errorBody.contains("correo", ignoreCase = true) -> {
+                            "El correo electrónico ya se encuentra registrado"
+                        }
+                        errorBody.contains("nombre", ignoreCase = true) || errorBody.contains("usuario", ignoreCase = true) -> {
+                            "El nombre de usuario ya está en uso"
+                        }
+                        else -> {
+                            // Si FastAPI arroja un mensaje estructurado como {"detail": "..."}
+                            if (errorBody.contains("detail")) {
+                                errorBody.substringAfter("\"detail\":\"").substringBefore("\"")
+                            } else {
+                                "Error en el servidor (${response.code()})"
+                            }
+                        }
+                    }
+
+                    _error.value = mensajeError
+                    onResult(mensajeError) // Se lo mandamos al formulario para que lo pinte en pantalla
+                }
+            } catch (e: Exception) {
+                val errorNet = "Error de conexión: ${e.localizedMessage}"
+                _error.value = errorNet
+                onResult(errorNet)
+            } finally {
+                _loading.value = false
+            }
         }
     }
 
@@ -413,9 +453,43 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
             _loading.value = true
             try {
                 val response = apiService.verificarUsuario(mapOf("email" to email, "codigo" to codigo))
-                onResult(response.isSuccessful, response.body()?.get("mensaje") ?: "")
-            } catch (e: Exception) { onResult(false, "Error") }
-            finally { _loading.value = false }
+
+                if (response.isSuccessful) {
+                    // El backend devuelve un mapa con la clave "mensaje" (ej: "Cuenta verificada con éxito")
+                    val msgExito = response.body()?.get("mensaje") ?: "¡Cuenta verificada con éxito!"
+                    _error.value = null
+                    onResult(true, msgExito)
+                } else {
+                    // 🔍 Extraemos el JSON de error de FastAPI
+                    val errorBody = response.errorBody()?.string()
+
+                    val msgError = when {
+                        errorBody == null -> "Error al verificar la cuenta"
+                        errorBody.contains("incorrecto", ignoreCase = true) || errorBody.contains("valido", ignoreCase = true) -> {
+                            "El código ingresado es incorrecto"
+                        }
+                        errorBody.contains("expirado", ignoreCase = true) || errorBody.contains("tiempo", ignoreCase = true) -> {
+                            "El código ha expirado. Solicita uno nuevo"
+                        }
+                        else -> {
+                            if (errorBody.contains("detail")) {
+                                errorBody.substringAfter("\"detail\":\"").substringBefore("\"")
+                            } else {
+                                "Código inválido o error de validación"
+                            }
+                        }
+                    }
+
+                    _error.value = msgError
+                    onResult(false, msgError)
+                }
+            } catch (e: Exception) {
+                val errorNet = "Error de red: No se pudo conectar con el servidor"
+                _error.value = errorNet
+                onResult(false, errorNet)
+            } finally {
+                _loading.value = false
+            }
         }
     }
 

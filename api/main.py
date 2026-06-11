@@ -11,6 +11,7 @@ import random
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
+from datetime import date
 
 load_dotenv()
 
@@ -197,7 +198,34 @@ def login(req: LoginRequest):
             user["activo"] = bool(user["activo"])
             return user
     finally: conn.close()
-
+    
+@app.post("/usuarios")
+def registrar_usuario(u: UsuarioBase): # Usa el mismo modelo Pydantic que usas en el PUT
+    conn = get_db_connection()
+    if not conn: 
+        raise HTTPException(500, "Error de conexión con la base de datos")
+    try:
+        with conn.cursor() as cursor:
+            # 1. Validar primero si el correo electrónico ya está registrado (es UNIQUE en tu DB)
+            cursor.execute("SELECT id FROM usuario WHERE email = %s", (u.email,))
+            if cursor.fetchone():
+                raise HTTPException(400, "El correo electrónico ya se encuentra registrado")
+                
+            # 2. Insertar el nuevo usuario en la Base de Datos
+            # Nota: Usamos date.today() para mapear la fecha_creacion automáticamente desde el backend
+            query = """
+                INSERT INTO usuario (nombre, contrasena, email, tipo_usuario_id, activo, fecha_creacion)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(query, (u.nombre, u.contrasena, u.email, u.tipo_usuario_id, 1 if u.activo else 0, date.today()))
+            conn.commit()
+            
+            return {"mensaje": "Usuario creado correctamente"}
+    except Exception as e:
+        raise HTTPException(500, f"Error interno en el servidor: {str(e)}")
+    finally: 
+        conn.close()    
+    
 @app.put("/usuarios/{id}")
 def actualizar_usuario(id: int, u: UsuarioBase):
     conn = get_db_connection()

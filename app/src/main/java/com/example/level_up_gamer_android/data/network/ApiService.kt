@@ -5,7 +5,8 @@ import com.example.level_up_gamer_android.model.Usuario
 import com.example.level_up_gamer_android.model.Direccion
 import retrofit2.Response
 import retrofit2.http.*
-
+import retrofit2.http.Body
+import retrofit2.http.POST
 interface ApiService {
     @GET("productos")
     suspend fun getProductos(): Response<List<Producto>>
