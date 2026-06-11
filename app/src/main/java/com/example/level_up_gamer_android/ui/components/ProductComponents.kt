@@ -22,12 +22,14 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.level_up_gamer_android.R
 import com.example.level_up_gamer_android.model.Producto
+// Asegúrate de verificar la ruta exacta de tus AppStyles
+import com.example.level_up_gamer_android.ui.theme.AppStyles
 import com.example.level_up_gamer_android.utils.format3
 import com.example.level_up_gamer_android.utils.getLocalImageResource
 
 @Composable
 fun ProductoCard(
-    producto: Producto, 
+    producto: Producto,
     tipoUsuarioId: Int,
     onAddToCart: () -> Unit,
     onEditClick: () -> Unit = {},
@@ -61,34 +63,43 @@ fun ProductoCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
 
+                    // Categoría: Cambiado al Violeta Neón de la marca
                     CustomText(
                         text = "Categoría: ${producto.categoria}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
+                        color = AppStyles.Cards.BorderColor
                     )
                     Spacer(modifier = Modifier.height(8.dp))
+
                     CustomText(
                         text = producto.descripcion,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.8f)
+                        color = Color.White.copy(alpha = AppStyles.Inputs.UnfocusedAlpha) // Opacidad oficial (0.7f)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // Precio: Brilla en el Cyan Neón característico de la tienda
                         CustomText(
-                            text = "Precio: $${producto.precio.format3()}",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
+                            text = "$${producto.precio.format3()}",
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF00E5FF),
                             style = MaterialTheme.typography.titleMedium
                         )
-                        val stockColor = if (producto.cantidad < 5) Color.Red else Color.White
+
+                        // Control de Alerta de Stock Estilo Cyberpunk (Rojo Eléctrico)
+                        val stockBajo = producto.cantidad < 5
+                        val stockColor = if (stockBajo) Color(0xFFFF0055) else Color.White.copy(alpha = 0.6f)
+
                         CustomText(
                             text = "Stock: ${producto.cantidad}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = stockColor,
-                            fontWeight = if (producto.cantidad < 5) FontWeight.Bold else FontWeight.Normal
+                            fontWeight = if (stockBajo) FontWeight.Bold else FontWeight.Normal
                         )
                     }
                 }
@@ -100,7 +111,7 @@ fun ProductoCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (tipoUsuarioId == 2) { // SOLO Supervisor tiene poderes sobre productos
+                if (tipoUsuarioId == 2) { // Vista de Gestión: Supervisor
                     CustomButton(
                         text = "Ventas",
                         onClick = onViewSales,
@@ -113,16 +124,18 @@ fun ProductoCard(
                         modifier = Modifier.weight(1f),
                         icon = Icons.Outlined.EditNote
                     )
+                    // Botón Eliminar: Al asignarle un color de fondo plano o custom,
+                    // puedes dejarlo con la estructura del botón estándar para mantener uniformidad de grilla
                     CustomButton(
                         text = "Eliminar",
                         onClick = onDeleteClick,
                         modifier = Modifier.weight(1f),
                         icon = Icons.Outlined.Delete
                     )
-                } else {
+                } else { // Vista de Cliente
                     val hayStock = producto.cantidad > 0
                     var count by remember { mutableIntStateOf(0) }
-                    
+
                     CustomButton(
                         text = if (hayStock) "Agregar" else "Agotado",
                         onClick = {
@@ -146,7 +159,7 @@ fun ProductoCard(
 fun ProductoImage(producto: Producto, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val fullImageUrl = com.example.level_up_gamer_android.utils.getFullImageUrl(producto.imagenUrl)
-    
+
     if (!fullImageUrl.isNullOrEmpty()) {
         AsyncImage(
             model = ImageRequest.Builder(context).data(fullImageUrl).crossfade(true).build(),
@@ -155,7 +168,7 @@ fun ProductoImage(producto: Producto, modifier: Modifier = Modifier) {
             contentScale = ContentScale.Crop,
             error = painterResource(id = R.drawable.product_placeholder)
         )
-    } 
+    }
     else {
         val localImageRes = getLocalImageResource(context, producto.codigo)
         if (localImageRes != 0) {

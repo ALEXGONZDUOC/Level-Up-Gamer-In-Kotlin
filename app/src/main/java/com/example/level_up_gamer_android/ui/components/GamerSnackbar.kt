@@ -2,26 +2,33 @@ package com.example.level_up_gamer_android.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+// Asegúrate de verificar la ruta exacta de tus AppStyles
+import com.example.level_up_gamer_android.ui.theme.AppStyles
 
 @Composable
 fun GamerSnackbar(snackbarData: SnackbarData) {
     Card(
-        shape = RoundedCornerShape(12.dp),
+        // 1. Usamos la forma de los botones/inputs (12.dp) para notificaciones compactas
+        shape = AppStyles.Buttons.Shape,
+
+        // 2. Borde neón unificado con el color insignia del Mod (Violeta Neón)
         border = BorderStroke(
-            width = 1.dp,
-            brush = Brush.linearGradient(
-                colors = listOf(Color(0xFF8831E7), Color(0xFF00E5FF))
-            )
+            width = AppStyles.Cards.BorderWidth, // 1.dp oficial
+            color = AppStyles.Cards.BorderColor  // Color(0xFF7A00FF)
         ),
+
+        // 3. Fondo oscuro con el alpha oficial para superficies flotantes
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF16162B).copy(alpha = 0.95f)
+            containerColor = AppStyles.Cards.BackgroundColor.copy(
+                alpha = AppStyles.Backgrounds.SurfaceAlpha // 0.85f oficial
+            )
         ),
         modifier = Modifier
             .padding(16.dp)
@@ -29,15 +36,34 @@ fun GamerSnackbar(snackbarData: SnackbarData) {
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            // Mensaje de la notificación (izquieda)
             CustomText(
                 text = snackbarData.visuals.message,
                 color = Color.White,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f)
             )
+
+            // 4. Si el snackbar incluye un botón de acción (ej: "Ver"), lo pintamos en Cyan Neón
+            snackbarData.visuals.actionLabel?.let { actionLabel ->
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(
+                    onClick = { snackbarData.performAction() },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    CustomText(
+                        text = actionLabel,
+                        color = Color(0xFF00E5FF), // Cyan Neón interactivo
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }

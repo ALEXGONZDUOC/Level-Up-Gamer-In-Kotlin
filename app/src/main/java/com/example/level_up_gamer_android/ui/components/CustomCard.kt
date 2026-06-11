@@ -2,15 +2,13 @@ package com.example.level_up_gamer_android.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+// Asegúrate de verificar la ruta exacta de tus AppStyles
+import com.example.level_up_gamer_android.ui.theme.AppStyles
 
 @Composable
 fun CustomCard(
@@ -19,19 +17,25 @@ fun CustomCard(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        // 1. Aplicamos la forma asimétrica del diseño del Mod (16.dp arriba, 0.dp abajo)
+        shape = AppStyles.Cards.Shape,
+
+        // 2. Borde sólido en sintonía con el color de acento oficial (Violeta Neón)
         border = BorderStroke(
-            width = 1.5.dp,
-            brush = Brush.linearGradient(
-                colors = listOf(
-                    Color(0xFF8831E7), // Violeta Neón
-                    Color(0xFF00E5FF)  // Cian Neón
-                )
-            )
+            width = AppStyles.Cards.BorderWidth, // 1.dp oficial
+            color = AppStyles.Cards.BorderColor  // Color(0xFF7A00FF)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+
+        // 3. Elevación sutil pero marcada por el contorno neón
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = AppStyles.Cards.Elevation // 4.dp oficial
+        ),
+
+        // 4. Fondo oscuro con matiz lila aplicando el alpha configurado en tus estilos
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF16162B).copy(alpha = 0.85f) // Fondo oscuro gamer con leve transparencia
+            containerColor = AppStyles.Cards.BackgroundColor.copy(
+                alpha = AppStyles.Backgrounds.SurfaceAlpha // 0.85f oficial
+            )
         ),
         content = content
     )

@@ -5,7 +5,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+// Asegúrate de cambiar esta importación por la ruta real de tu AppStyles si está en otro paquete
+import com.example.level_up_gamer_android.ui.theme.AppStyles
 import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
 
 @Composable
@@ -31,7 +34,7 @@ fun LoginForm(
             text = "Inicio de Sesión",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 24.dp),
-            color = MaterialTheme.colorScheme.tertiary
+            color = AppStyles.Cards.BorderColor // Violeta Neón para los títulos principales
         )
 
         CustomTextField(
@@ -56,14 +59,15 @@ fun LoginForm(
         errorMsg?.let {
             CustomText(
                 text = it,
-                color = MaterialTheme.colorScheme.error,
+                color = Color(0xFFFF0055), // Un rojo/rosa neón Cyberpunk para los errores
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
         }
 
         if (isLoading) {
-            CircularProgressIndicator()
+            // El indicador de carga ahora usa el Cyan de los botones
+            CircularProgressIndicator(color = Color(0xFF00E5FF))
         } else {
             CustomButton(
                 text = "Iniciar Sesión",
@@ -83,13 +87,18 @@ fun LoginForm(
         Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(onClick = onForgotPasswordClick) {
-            CustomText("¿Olvidaste tu contraseña?", color = MaterialTheme.colorScheme.primary)
+            // Cyan Neón para que resalte como enlace interactivo secundario
+            CustomText("¿Olvidaste tu contraseña?", color = Color(0xFF00E5FF))
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(onClick = onRegisterClick) {
-            CustomText("¿No tienes una cuenta? Regístrate")
+            // Texto de registro sutil utilizando la opacidad unfocused de tus inputs
+            CustomText(
+                text = "¿No tienes una cuenta? Regístrate",
+                color = Color.White.copy(alpha = AppStyles.Inputs.UnfocusedAlpha)
+            )
         }
     }
 }
@@ -113,7 +122,7 @@ fun RegistroForm(viewModel: FormularioViewModel, onRegisterSuccess: (String) -> 
             text = "Registro de Usuario",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 24.dp),
-            color = MaterialTheme.colorScheme.tertiary
+            color = AppStyles.Cards.BorderColor // Violeta Neón
         )
 
         CustomTextField(
@@ -145,7 +154,7 @@ fun RegistroForm(viewModel: FormularioViewModel, onRegisterSuccess: (String) -> 
         Spacer(modifier = Modifier.height(24.dp))
 
         if (isLoading) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(color = Color(0xFF00E5FF))
         } else {
             CustomButton(
                 text = "Registrar",
@@ -167,6 +176,7 @@ fun RegistroForm(viewModel: FormularioViewModel, onRegisterSuccess: (String) -> 
         mensajeRegistro?.let {
             CustomText(
                 text = it,
+                color = Color(0xFFFF0055), // Error en tono Cyberpunk
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 24.dp)
             )
@@ -187,9 +197,9 @@ fun UpdateProfileForm(
     } else {
         currentUser
     }
-    
+
     val mensaje by viewModel.error.collectAsState()
-    
+
     var nombre by remember(userToEdit) { mutableStateOf(userToEdit?.nombre ?: "") }
     var email by remember(userToEdit) { mutableStateOf(userToEdit?.email ?: "") }
     var contrasena by remember { mutableStateOf("") }
@@ -205,7 +215,7 @@ fun UpdateProfileForm(
             text = if (targetUserId != null) "Editar Usuario: ${userToEdit?.nombre}" else "Actualizar Perfil",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 24.dp),
-            color = MaterialTheme.colorScheme.tertiary
+            color = AppStyles.Cards.BorderColor // Violeta Neón
         )
 
         CustomTextField(
@@ -239,6 +249,7 @@ fun UpdateProfileForm(
         mensaje?.let {
             CustomText(
                 text = it,
+                color = Color(0xFFFF0055),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(bottom = 16.dp)
             )

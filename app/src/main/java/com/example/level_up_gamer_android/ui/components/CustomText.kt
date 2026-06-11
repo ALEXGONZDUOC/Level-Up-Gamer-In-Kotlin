@@ -15,7 +15,8 @@ fun CustomText(
     text: String,
     modifier: Modifier = Modifier,
     style: TextStyle = LocalTextStyle.current,
-    color: Color = Color.Unspecified,
+    // CAMBIO: Si no se especifica un color, por defecto es blanco puro para tu fondo oscuro
+    color: Color = Color.White,
     fontSize: TextUnit = TextUnit.Unspecified,
     fontWeight: FontWeight? = null,
     textAlign: TextAlign? = null

@@ -1,7 +1,6 @@
 package com.example.level_up_gamer_android.ui.components
 
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -11,6 +10,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+// Asegúrate de verificar la ruta exacta de tus AppStyles
+import com.example.level_up_gamer_android.ui.theme.AppStyles
 
 @Composable
 fun CustomTextField(
@@ -23,23 +24,42 @@ fun CustomTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
+        // Usamos CustomText interno o un Text con color controlado para la etiqueta
+        label = {
+            Text(
+                text = label,
+                color = Color.White.copy(alpha = AppStyles.Inputs.UnfocusedAlpha)
+            )
+        },
         modifier = modifier,
         singleLine = true,
+        // Aplicamos el RoundedCornerShape(8.dp) oficial de tus estilos de entrada
+        shape = AppStyles.Inputs.Shape,
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions = KeyboardOptions(
             keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Text
         ),
         colors = OutlinedTextFieldDefaults.colors(
+            // --- TEXTO ---
             focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            focusedLabelColor = MaterialTheme.colorScheme.primary,
-            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            cursorColor = MaterialTheme.colorScheme.primary,
+            unfocusedTextColor = Color.White.copy(alpha = AppStyles.Inputs.UnfocusedAlpha),
+
+            // --- BORDES (Brillo Neón al enfocar) ---
+            focusedBorderColor = Color(0xFF00E5FF), // Cyan Neón al escribir
+            unfocusedBorderColor = AppStyles.Cards.BorderColor.copy(alpha = 0.3f), // Violeta apagado de fondo
+
+            // --- ETIQUETAS (Labels) ---
+            focusedLabelColor = Color(0xFF00E5FF), // La etiqueta cambia a Cyan al activarse
+            unfocusedLabelColor = Color.White.copy(alpha = AppStyles.Inputs.UnfocusedAlpha),
+
+            // --- CURSOR Y CONTENEDOR ---
+            cursorColor = Color(0xFF00E5FF), // Cursor Cyan sintonizado
+            focusedContainerColor = AppStyles.Cards.BackgroundColor.copy(alpha = 0.5f), // Fondo semi-transparente de tarjeta
+            unfocusedContainerColor = AppStyles.Cards.BackgroundColor.copy(alpha = 0.2f),
+
+            // --- PLACEHOLDERS ---
             focusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
-            unfocusedPlaceholderColor = Color.White.copy(alpha = 0.5f)
+            unfocusedPlaceholderColor = Color.White.copy(alpha = 0.3f)
         )
     )
 }

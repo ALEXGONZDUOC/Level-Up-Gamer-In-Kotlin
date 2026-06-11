@@ -56,126 +56,109 @@ fun SplashScreen(navController: NavController) {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF02010A)) // negro azulado gamer
+            .background(Color(0xFF02010A))
     ) {
-        // --- Fondo animado de partículas gamer ---
-        val particleCount = 40
+        // --- 1. Sistema de Partículas Flotantes ---
+        val particleCount = 30
         val particles = remember {
             List(particleCount) {
                 Particle(
                     x = Random.nextFloat(),
                     y = Random.nextFloat(),
                     size = Random.nextInt(4, 10),
-                    speed = Random.nextFloat() * 0.5f + 0.2f
+                    speed = Random.nextFloat() * 0.2f + 0.1f
                 )
             }
         }
 
-        val particleTransition = rememberInfiniteTransition()
-        val time by particleTransition.animateFloat(
+        val infiniteTransition = rememberInfiniteTransition(label = "GamerTransition")
+
+        // Progreso infinito para mover las partículas y la retícula
+        val animProgress by infiniteTransition.animateFloat(
             initialValue = 0f,
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
                 animation = tween(4000, easing = LinearEasing),
                 repeatMode = RepeatMode.Restart
-            )
+            ),
+            label = "Progress"
         )
-
-        // Animación infinita para el movimiento ondulante
-        val waveTransition = rememberInfiniteTransition()
-        val waveOffset by waveTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = 2 * Math.PI.toFloat(),
-            animationSpec = infiniteRepeatable(
-                animation = tween(3000, easing = LinearEasing),
-                repeatMode = RepeatMode.Restart
-            )
-        )
-
-        val random = Random(System.currentTimeMillis())
 
         Canvas(modifier = Modifier.fillMaxSize()) {
+            val w = size.width
+            val h = size.height
 
-            val spacing = 120f
-            val strokeWidth = 6f
-
-            // Gradiente violeta → cyan
-            val gradient = Brush.horizontalGradient(
-                colors = listOf(
-                    Color(0xFF4A2CFF), // violeta profundo
-                    Color(0xFF003CFF), // azul intenso
-                    Color(0xFF3FA4FF), // azul medio
-                    Color(0xFF7FE7FF)  // cyan suave neon
+            // Dibujar Partículas
+            particles.forEach { p ->
+                val currentY = (p.y * h - (animProgress * p.speed * h)) % h
+                val finalY = if (currentY < 0) currentY + h else currentY
+                drawCircle(
+                    color = Color(0xFF7FE7FF).copy(alpha = 0.4f),
+                    radius = p.size.toFloat(),
+                    center = androidx.compose.ui.geometry.Offset(p.x * w, finalY)
                 )
-            )
+            }
 
-            var y = 0f
-            while (y < size.height) {
+            // --- 2. Retícula Neon en Perspectiva ---
+            val gridCount = 8
+            val horizon = h * 0.4f // Línea de horizonte simulada
 
-                val path = Path().apply {
-                    moveTo(0f, y)
-
-                    // Curva ondulante animada
-                    cubicTo(
-                        size.width * 0.25f,
-                        y + 40f * sin(waveOffset + y / 200f),
-                        size.width * 0.75f,
-                        y - 40f * sin(waveOffset + y / 200f),
-                        size.width,
-                        y
-                    )
-                }
-
-                drawPath(
-                    path = path,
-                    brush = gradient,
-                    style = Stroke(width = strokeWidth)
+            // Líneas de fuga (Perspectiva)
+            for (i in 0..gridCount) {
+                val startX = w * (i.toFloat() / gridCount)
+                drawLine(
+                    color = Color(0xFF4A2CFF).copy(alpha = 0.3f),
+                    start = androidx.compose.ui.geometry.Offset(w / 2, horizon),
+                    end = androidx.compose.ui.geometry.Offset(startX, h),
+                    strokeWidth = 3f
                 )
+            }
 
-                y += spacing
+            // Líneas horizontales en movimiento
+            val horizontalLines = 6
+            for (i in 0 until horizontalLines) {
+                // Movimiento exponencial para simular velocidad en perspectiva
+                val lineProgress = (i.toFloat() / horizontalLines + animProgress) % 1f
+                val currentLineY = horizon + (h - horizon) * (lineProgress * lineProgress)
+
+                drawLine(
+                    color = Color(0xFF003CFF).copy(alpha = (1f - lineProgress) * 0.5f),
+                    start = androidx.compose.ui.geometry.Offset(0f, currentLineY),
+                    end = androidx.compose.ui.geometry.Offset(w, currentLineY),
+                    strokeWidth = 4f
+                )
             }
         }
 
-
-
-        // Animaciones base (fade + zoom + movimiento)
-        val scale = remember { Animatable(0.8f) }
-        val alpha = remember { Animatable(1f) }
-        val offsetY = remember { Animatable(40f) }
+        // --- 3. Animación de Entrada del Logo (Scale Up + Fade In) ---
+        val scale = remember { Animatable(0.3f) }
+        val alpha = remember { Animatable(0f) }
 
         LaunchedEffect(Unit) {
-            launch { scale.animateTo(1f, tween(600)) }
-            launch { alpha.animateTo(1f, tween(500)) }
-            launch { offsetY.animateTo(1f, tween(900)) }
+            launch { scale.animateTo(1.0f, tween(800, easing = androidx.compose.animation.core.FastOutSlowInEasing)) }
+            launch { alpha.animateTo(1.0f, tween(600)) }
         }
 
-        // Animación infinita para el glow pulsante
-        val infiniteTransition = rememberInfiniteTransition()
-        val glow by infiniteTransition.animateFloat(
-            initialValue = 20f,
-            targetValue = 50f,
+        // Glow pulsante arreglado (usando gráficos en vez de shadow de caja para mejor performance)
+        val logoGlow by infiniteTransition.animateFloat(
+            initialValue = 0.95f,
+            targetValue = 1.05f,
             animationSpec = infiniteRepeatable(
-                animation = tween(1200),
+                animation = tween(1000, easing = LinearEasing),
                 repeatMode = RepeatMode.Reverse
-            )
+            ),
+            label = "LogoGlow"
         )
 
         Image(
             painter = painterResource(id = R.drawable.logo_app),
             contentDescription = "Logo Level Up Gamer",
             modifier = Modifier
-                .size(300.dp)
+                .size(280.dp)
                 .graphicsLayer(
-                    scaleX = scale.value,
-                    scaleY = scale.value,
-                    alpha = alpha.value,
-                    translationY = offsetY.value
-                )
-                .shadow(
-                    elevation = glow.dp,
-                    shape = RectangleShape, // ← Glow sin fondo circular
-                    ambientColor = Color(0xFF8831E7),
-                    spotColor = Color(0xFF9D4BFF)
+                    scaleX = scale.value * logoGlow,
+                    scaleY = scale.value * logoGlow,
+                    alpha = alpha.value
                 )
         )
     }

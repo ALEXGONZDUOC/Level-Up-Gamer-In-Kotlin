@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete // Cambiado para una mejor UX de eliminación
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
@@ -20,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -30,6 +32,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.level_up_gamer_android.R
 import com.example.level_up_gamer_android.model.Producto
+// Asegúrate de verificar la ruta exacta de tus AppStyles
+import com.example.level_up_gamer_android.ui.theme.AppStyles
 import com.example.level_up_gamer_android.utils.format3
 import com.example.level_up_gamer_android.utils.getLocalImageResource
 
@@ -61,22 +65,24 @@ fun CartItemCard(
                 CustomText(
                     text = producto.nombre,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    color = Color.White
                 )
+                // Precio unitario: Cyan Neón vibrante
                 CustomText(
                     text = "$${producto.precio.format3()}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = Color(0xFF00E5FF)
                 )
+                // Subtotal: Enfatizado con el Violeta Neón de las tarjetas/bordes
                 CustomText(
                     text = "Subtotal: $${(producto.precio * quantity).format3()}",
                     style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
+                    color = AppStyles.Cards.BorderColor
                 )
-
             }
 
-            // Botones
+            // Botones de control de cantidad
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -84,13 +90,15 @@ fun CartItemCard(
                 IconButton(onClick = onDecrease) {
                     Icon(
                         imageVector = Icons.Default.Remove,
-                        contentDescription = "Disminuir cantidad"
+                        contentDescription = "Disminuir cantidad",
+                        tint = Color.White.copy(alpha = AppStyles.Inputs.UnfocusedAlpha)
                     )
                 }
                 CustomText(
                     text = quantity.toString(),
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
                 IconButton(
                     onClick = onIncrease,
@@ -100,16 +108,16 @@ fun CartItemCard(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Aumentar cantidad",
                         tint = if (quantity < producto.cantidad)
-                            MaterialTheme.colorScheme.primary
+                            Color(0xFF00E5FF) // Cyan Neón si está habilitado
                         else
-                            MaterialTheme.colorScheme.outline
+                            Color.White.copy(alpha = 0.3f) // Opaco si llegó al límite de stock
                     )
                 }
                 IconButton(onClick = onRemove) {
                     Icon(
-                        imageVector = Icons.Default.ShoppingCart,
+                        imageVector = Icons.Default.Delete, // Ícono de basurero más intuitivo
                         contentDescription = "Eliminar del carrito",
-                        tint = MaterialTheme.colorScheme.error
+                        tint = Color(0xFFFF0055) // Rojo/Rosa eléctrico Cyberpunk
                     )
                 }
             }
@@ -162,24 +170,24 @@ fun EmptyCartView() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Icono de carrito vacío con el Violeta del Mod atenuado
         Icon(
             imageVector = Icons.Default.ShoppingCart,
             contentDescription = "Carrito vacío",
             modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.outline
+            tint = AppStyles.Cards.BorderColor.copy(alpha = 0.4f)
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "Tu carrito está vacío",
             style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.outline
+            color = Color.White
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "Agrega productos desde el catálogo",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline
+            color = Color.White.copy(alpha = AppStyles.Inputs.UnfocusedAlpha)
         )
     }
 }
-

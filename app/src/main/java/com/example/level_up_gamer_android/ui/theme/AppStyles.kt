@@ -5,10 +5,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-/**
- * AppStyles - El "Style.css" de LevelUP Gamer.
- * MATCH 1:1 con LevelUP_MODELdISENG
- */
 object AppStyles {
 
     // --- FONDOS Y GRADIENTES ---
@@ -16,7 +12,7 @@ object AppStyles {
         val MainGradient = Brush.verticalGradient(
             colors = listOf(
                 Color(0xFF0A0A1A), // DarkBackground
-                Color(0xFF0A0A1A).copy(alpha = 0.8f) 
+                Color(0xFF0A0A1A).copy(alpha = 0.8f)
             )
         )
         val SurfaceAlpha = 0.85f
@@ -26,15 +22,15 @@ object AppStyles {
     object Cards {
         // La forma asimétrica es la clave del diseño del Mod
         val Shape = RoundedCornerShape(
-            topStart = 16.dp, 
-            topEnd = 16.dp, 
-            bottomStart = 0.dp, 
+            topStart = 16.dp,
+            topEnd = 16.dp,
+            bottomStart = 0.dp,
             bottomEnd = 0.dp
         )
         val Elevation = 4.dp // Elevación sutil pero marcada por el borde
         val BorderWidth = 1.dp
-        val BorderColor = Color(0xFF3FA4FF) // BlueMedium (Primary)
-        val BackgroundColor = Color(0xFF14142B) // CardBackground
+        val BorderColor = Color(0xFF7A00FF) // Violeta neón (Match con botones)
+        val BackgroundColor = Color(0xFF120C1F) // Fondo oscuro con matiz violeta
     }
 
     // --- BOTONES (Buttons) ---

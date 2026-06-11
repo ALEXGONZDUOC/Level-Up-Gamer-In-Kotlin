@@ -3,7 +3,6 @@ package com.example.level_up_gamer_android.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -19,6 +18,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+// Asegúrate de verificar la ruta exacta de tus AppStyles
+import com.example.level_up_gamer_android.ui.theme.AppStyles
 
 @Composable
 fun CustomButton(
@@ -29,31 +30,32 @@ fun CustomButton(
     icon: ImageVector? = null,
     count: Int = 0
 ) {
+    // 1. Vinculamos el gradiente al NeonGradient oficial de AppStyles
     val gradient = if (enabled) {
+        AppStyles.Buttons.NeonGradient
+    } else {
+        // Modo deshabilitado Cyberpunk: Escala de grises oscuros integrados
         Brush.horizontalGradient(
             colors = listOf(
-                Color(0xFF8E2DE2), // Violeta brillante
-                Color(0xFF4A00E0)  // Azul eléctrico
+                Color(0xFF252538),
+                Color(0xFF14142B)
             )
-        )
-    } else {
-        Brush.horizontalGradient(
-            colors = listOf(Color(0xFF434343), Color(0xFF000000))
         )
     }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .height(AppStyles.Buttons.Height) // 50.dp oficiales
             .shadow(
-                elevation = if (enabled) 12.dp else 0.dp,
-                shape = RoundedCornerShape(14.dp),
-                ambientColor = Color(0xFF8E2DE2),
-                spotColor = Color(0xFF4A00E0)
+                // Control dinámico de elevaciones basado en tus AppStyles
+                elevation = if (enabled) AppStyles.Buttons.Elevation else 0.dp,
+                shape = AppStyles.Buttons.Shape, // Redondeado de 12.dp oficial
+                ambientColor = Color(0xFF7A00FF), // Sombra dispersa Violeta Neón
+                spotColor = Color(0xFF00E5FF)     // Punto de luz Cyan Neón
             )
-            .background(gradient, shape = RoundedCornerShape(14.dp))
-            .clip(RoundedCornerShape(14.dp))
+            .background(gradient, shape = AppStyles.Buttons.Shape)
+            .clip(AppStyles.Buttons.Shape)
     ) {
         Button(
             onClick = onClick,
@@ -63,7 +65,7 @@ fun CustomButton(
                 containerColor = Color.Transparent,
                 contentColor = Color.White,
                 disabledContainerColor = Color.Transparent,
-                disabledContentColor = Color.White.copy(alpha = 0.5f)
+                disabledContentColor = Color.White.copy(alpha = AppStyles.Inputs.UnfocusedAlpha)
             ),
             contentPadding = PaddingValues(0.dp),
             elevation = null
@@ -74,12 +76,13 @@ fun CustomButton(
             ) {
                 if (icon != null) {
                     if (icon == Icons.Default.ShoppingCart || icon == Icons.Default.AddShoppingCart) {
-                        CartIconInsideNeon(count)
+                        CartIconInsideNeon(count, enabled)
                     } else {
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.White
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -89,7 +92,8 @@ fun CustomButton(
                     text = text,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1
+                    maxLines = 1,
+                    color = if (enabled) Color.White else Color.White.copy(alpha = 0.4f)
                 )
             }
         }
@@ -97,41 +101,39 @@ fun CustomButton(
 }
 
 @Composable
-fun CartIconInsideNeon(count: Int) {
-    // Gradiente violeta → cyan
-    val neonBrush = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF7A00FF), // violeta neon
-            Color(0xFF00E5FF)  // cyan neon
-        )
-    )
+fun CartIconInsideNeon(count: Int, enabled: Boolean) {
+    // Usamos el gradiente oficial de botones para el aura de brillo
+    val neonBrush = AppStyles.Buttons.NeonGradient
 
     Box(contentAlignment = Alignment.Center) {
-        // Glow suave detrás del ícono
-        Canvas(modifier = Modifier.matchParentSize()) {
-            drawCircle(
-                brush = neonBrush,
-                radius = size.minDimension / 1.8f,
-                alpha = 0.25f
-            )
+        // Solo dibuja el destello/glow si el botón está activo
+        if (enabled) {
+            Canvas(modifier = Modifier.matchParentSize()) {
+                drawCircle(
+                    brush = neonBrush,
+                    radius = size.minDimension / 1.8f,
+                    alpha = AppStyles.Buttons.GlowAlpha // 0.25f oficial
+                )
+            }
         }
 
-        // Ícono con gradiente
         Icon(
             imageVector = Icons.Default.ShoppingCart,
             contentDescription = null,
             modifier = Modifier.size(26.dp),
-            tint = Color.Unspecified // permite usar el brush
+            tint = if (enabled) Color.White else Color.White.copy(alpha = 0.3f)
         )
 
-        // Número dentro del carrito
-        if (count > 0) {
+        // Contador numérico sobrepuesto de forma limpia
+        if (count > 0 && enabled) {
             Text(
                 text = count.toString(),
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.Center)
+                color = Color(0xFF0A0A1A), // Tu DarkBackground para que resalte por contraste dentro del ícono blanco
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Black,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(bottom = 24.dp / 6) // Pequeño offset para centrar el número en el espacio de la cesta
             )
         }
     }
