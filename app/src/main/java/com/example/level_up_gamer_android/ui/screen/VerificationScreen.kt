@@ -28,6 +28,21 @@ fun VerificationScreen(navController: NavController, viewModel: FormularioViewMo
     val loading by viewModel.loading.collectAsState()
     val scope = rememberCoroutineScope()
 
+    // ⏱️ Variables de estado para el temporizador
+    var tiempoRestante by remember { mutableIntStateOf(30) }
+    var puedeReenviar by remember { mutableStateOf(false) }
+
+    // 🔄 Efecto que maneja la cuenta regresiva de 30 segundos
+    LaunchedEffect(tiempoRestante) {
+        if (tiempoRestante > 0) {
+            puedeReenviar = false
+            delay(1000L)
+            tiempoRestante -= 1
+        } else {
+            puedeReenviar = true
+        }
+    }
+
     GradientSurface {
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -59,13 +74,9 @@ fun VerificationScreen(navController: NavController, viewModel: FormularioViewMo
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // 🌟 EL NUEVO CÓDIGO OPTIMIZADO VA JUSTO AQUÍ:
             if (mensaje.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // Evaluamos si el mensaje denota éxito o error para cambiar entre verde cian o amarillo neón
                 val esExito = mensaje.contains("éxito", ignoreCase = true) || mensaje.contains("correctamente", ignoreCase = true)
-
                 CustomText(
                     text = mensaje,
                     color = if (esExito) Color.Green else Color.Yellow,
@@ -74,7 +85,37 @@ fun VerificationScreen(navController: NavController, viewModel: FormularioViewMo
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 🌟 SECCIÓN DE REENVÍO CON TEMPORIZADOR CYBERPUNK
+            if (puedeReenviar) {
+                TextButton(
+                    onClick = {
+                        // Cambia 'solicitarRecuperacion' por tu función real del ViewModel si es para registro
+                        viewModel.solicitarRecuperacion(email) { success, msg ->
+                            mensaje = msg
+                            if (success) {
+                                // Reiniciamos el temporizador si el reenvío fue exitoso
+                                tiempoRestante = 30
+                            }
+                        }
+                    }
+                ) {
+                    CustomText(
+                        text = "Reenviar código",
+                        color = MaterialTheme.colorScheme.secondary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            } else {
+                CustomText(
+                    text = "Reenviar código en ${tiempoRestante}s",
+                    fontSize = 14.sp,
+                    color = Color.White.copy(alpha = 0.5f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             CustomButton(
                 text = if (loading) "Verificando..." else "Verificar Ahora",
@@ -94,6 +135,8 @@ fun VerificationScreen(navController: NavController, viewModel: FormularioViewMo
                 },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             TextButton(onClick = { navController.popBackStack() }) {
                 CustomText("Volver al Login", color = MaterialTheme.colorScheme.primary)

@@ -10,7 +10,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-// Asegúrate de verificar la ruta exacta de tus AppStyles
 import com.example.level_up_gamer_android.ui.theme.AppStyles
 
 @Composable
@@ -19,12 +18,12 @@ fun CustomTextField(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    trailingIcon: @Composable (() -> Unit)? = null // 🌟 Agregamos el parámetro opcional para el ojito
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        // Usamos CustomText interno o un Text con color controlado para la etiqueta
         label = {
             Text(
                 text = label,
@@ -33,12 +32,12 @@ fun CustomTextField(
         },
         modifier = modifier,
         singleLine = true,
-        // Aplicamos el RoundedCornerShape(8.dp) oficial de tus estilos de entrada
         shape = AppStyles.Inputs.Shape,
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions = KeyboardOptions(
             keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Text
         ),
+        trailingIcon = trailingIcon, // 🌟 Conectamos el ícono al OutlinedTextField nativo
         colors = OutlinedTextFieldDefaults.colors(
             // --- TEXTO ---
             focusedTextColor = Color.White,
