@@ -71,7 +71,7 @@ fun OrderConfirmationScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     CustomText(
-                        text = "SISTEMA DE RASTREO // NÚMERO DE ORDEN",
+                        text = "Tu número de orden es",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = textMuted

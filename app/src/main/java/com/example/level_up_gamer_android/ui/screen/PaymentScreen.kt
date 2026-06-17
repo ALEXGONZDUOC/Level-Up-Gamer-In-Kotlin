@@ -220,6 +220,7 @@ fun PaymentScreen(
                             cvvTouched = true
                         },
                         label = { Text("CVV", fontWeight = FontWeight.Bold) },
+                        visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         isError = isCvvError,
                         modifier = Modifier.weight(1f),

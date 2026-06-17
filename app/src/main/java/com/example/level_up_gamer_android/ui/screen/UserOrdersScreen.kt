@@ -52,7 +52,7 @@ fun UserOrdersScreen(navController: NavController, viewModel: FormularioViewMode
                 TopAppBar(
                     title = {
                         Text(
-                            text = "REGISTRO DE MISIONES // PEDIDOS",
+                            text = "MIS PEDIDOS",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Black,
                             color = neonPurple
@@ -128,7 +128,7 @@ fun OrderExpandableCard(
                         color = neonCian
                     )
                     CustomText(
-                        text = "TIMESTAMP // ${pedido.fecha.split("T").firstOrNull() ?: ""}",
+                        text = "Pedido realizado el ${pedido.fecha.split("T").firstOrNull() ?: ""}",
                         fontSize = 11.sp,
                         color = textMuted
                     )
@@ -160,7 +160,7 @@ fun OrderExpandableCard(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     CustomText(
-                        text = "DIRECCIÓN DE DESPLIEGUE //",
+                        text = "Dirección de envío:",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = neonPurple
@@ -174,7 +174,7 @@ fun OrderExpandableCard(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     CustomText(
-                        text = "MANIFIESTO DE HARDWARE //",
+                        text = "Productos del pedido:",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = neonPurple

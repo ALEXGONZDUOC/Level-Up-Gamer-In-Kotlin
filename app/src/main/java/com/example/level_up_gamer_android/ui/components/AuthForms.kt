@@ -1,13 +1,15 @@
 package com.example.level_up_gamer_android.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-// Asegúrate de cambiar esta importación por la ruta real de tu AppStyles si está en otro paquete
 import com.example.level_up_gamer_android.ui.theme.AppStyles
 import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
 
@@ -21,6 +23,7 @@ fun LoginForm(
     var nombre by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    var loginPasswordVisible by remember { mutableStateOf(false) }
     val errorMsg by viewModel.error.collectAsState()
 
     Column(
@@ -50,8 +53,17 @@ fun LoginForm(
             value = contrasena,
             onValueChange = { contrasena = it },
             label = "Contraseña",
-            isPassword = true,
-            modifier = Modifier.fillMaxWidth()
+            isPassword = !loginPasswordVisible,
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(onClick = { loginPasswordVisible = !loginPasswordVisible }) {
+                    Icon(
+                        imageVector = if (loginPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                        contentDescription = if (loginPasswordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                        tint = Color(0xFF00E5FF)
+                    )
+                }
+            }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -108,6 +120,7 @@ fun RegistroForm(viewModel: FormularioViewModel, onRegisterSuccess: (String) -> 
     var nombre by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var registroPasswordVisible by remember { mutableStateOf(false) }
     val mensajeRegistro by viewModel.error.collectAsState()
     val isLoading by viewModel.loading.collectAsState()
 
@@ -147,8 +160,17 @@ fun RegistroForm(viewModel: FormularioViewModel, onRegisterSuccess: (String) -> 
             value = contrasena,
             onValueChange = { contrasena = it },
             label = "Ingrese su contraseña",
-            isPassword = true,
-            modifier = Modifier.fillMaxWidth()
+            isPassword = !registroPasswordVisible,
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(onClick = { registroPasswordVisible = !registroPasswordVisible }) {
+                    Icon(
+                        imageVector = if (registroPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                        contentDescription = if (registroPasswordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                        tint = Color(0xFF00E5FF)
+                    )
+                }
+            }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -203,6 +225,7 @@ fun UpdateProfileForm(
     var nombre by remember(userToEdit) { mutableStateOf(userToEdit?.nombre ?: "") }
     var email by remember(userToEdit) { mutableStateOf(userToEdit?.email ?: "") }
     var contrasena by remember { mutableStateOf("") }
+    var updatePasswordVisible by remember { mutableStateOf(false) }
 
     Column(
         verticalArrangement = Arrangement.Center,
@@ -240,8 +263,17 @@ fun UpdateProfileForm(
             value = contrasena,
             onValueChange = { contrasena = it },
             label = "Nueva contraseña (opcional)",
-            isPassword = true,
-            modifier = Modifier.fillMaxWidth()
+            isPassword = !updatePasswordVisible,
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(onClick = { updatePasswordVisible = !updatePasswordVisible }) {
+                    Icon(
+                        imageVector = if (updatePasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                        contentDescription = if (updatePasswordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                        tint = Color(0xFF00E5FF)
+                    )
+                }
+            }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
