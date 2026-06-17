@@ -1,6 +1,7 @@
 package com.example.level_up_gamer_android.ui.screen
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,7 +29,13 @@ import com.example.level_up_gamer_android.utils.format3
 fun UserOrdersScreen(navController: NavController, viewModel: FormularioViewModel) {
     val pedidos by viewModel.pedidos.collectAsState()
     val currentUser by viewModel.currentUser.collectAsState()
-    
+
+    // Paleta de Colores Cyberpunk Fijos
+    val neonCian = Color(0xFF00F0FF)
+    val neonPurple = Color(0xFFBD00FF)
+    val neonGreen = Color(0xFF39FF14)
+    val textMuted = Color.White.copy(alpha = 0.5f)
+
     // Filtrar pedidos solo para el usuario actual
     val misPedidos = remember(pedidos, currentUser) {
         pedidos.filter { it.usuario_id == currentUser?.id }
@@ -43,12 +50,13 @@ fun UserOrdersScreen(navController: NavController, viewModel: FormularioViewMode
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = { 
+                    title = {
                         Text(
-                            text = "MIS PEDIDOS", 
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = MaterialTheme.colorScheme.tertiary
-                        ) 
+                            text = "REGISTRO DE MISIONES // PEDIDOS",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Black,
+                            color = neonPurple
+                        )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
@@ -67,19 +75,19 @@ fun UserOrdersScreen(navController: NavController, viewModel: FormularioViewMode
                                 imageVector = Icons.Default.ShoppingBag,
                                 contentDescription = null,
                                 modifier = Modifier.size(64.dp),
-                                tint = Color.White.copy(alpha = 0.2f)
+                                tint = Color.White.copy(alpha = 0.1f)
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            CustomText("Aún no tienes pedidos.", color = Color.Gray)
+                            CustomText("LOG // No se encontraron registros en la red.", color = textMuted)
                         }
                     }
                 } else {
                     LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
                         contentPadding = PaddingValues(bottom = 120.dp)
                     ) {
                         items(misPedidos) { pedido ->
-                            OrderExpandableCard(pedido)
+                            OrderExpandableCard(pedido, neonCian, neonPurple, neonGreen, textMuted)
                         }
                     }
                 }
@@ -89,13 +97,22 @@ fun UserOrdersScreen(navController: NavController, viewModel: FormularioViewMode
 }
 
 @Composable
-fun OrderExpandableCard(pedido: Pedidos) {
+fun OrderExpandableCard(
+    pedido: Pedidos,
+    neonCian: Color,
+    neonPurple: Color,
+    neonGreen: Color,
+    textMuted: Color
+) {
     var expanded by remember { mutableStateOf(false) }
+    val borderAlpha = Color.White.copy(alpha = 0.1f)
 
-    CustomCard(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { expanded = !expanded }
+            .clickable { expanded = !expanded },
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF16162B).copy(alpha = 0.6f)),
+        border = BorderStroke(1.dp, if (expanded) neonPurple.copy(alpha = 0.5f) else borderAlpha)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -105,57 +122,66 @@ fun OrderExpandableCard(pedido: Pedidos) {
             ) {
                 Column {
                     CustomText(
-                        text = "Orden #LVL-${pedido.id}",
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        text = "ORDEN #LVL-${pedido.id}",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 16.sp,
+                        color = neonCian
                     )
                     CustomText(
-                        text = pedido.fecha.split("T").firstOrNull() ?: "",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.5f)
+                        text = "TIMESTAMP // ${pedido.fecha.split("T").firstOrNull() ?: ""}",
+                        fontSize = 11.sp,
+                        color = textMuted
                     )
                 }
-                
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     CustomText(
                         text = "$${pedido.total.format3()}",
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color.White,
+                        fontWeight = FontWeight.Black,
+                        color = neonGreen,
                         fontSize = 18.sp
                     )
                     Icon(
                         imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.tertiary,
+                        tint = neonCian,
                         modifier = Modifier.padding(start = 8.dp)
                     )
                 }
             }
 
-            AnimatedVisibility(visible = expanded) {
+            AnimatedVisibility(
+                visible = expanded,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
                 Column(modifier = Modifier.padding(top = 16.dp)) {
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                    HorizontalDivider(color = borderAlpha)
                     Spacer(modifier = Modifier.height(12.dp))
-                    
+
                     CustomText(
-                        text = "DIRECCIÓN DE ENVÍO",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.secondary
+                        text = "DIRECCIÓN DE DESPLIEGUE //",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = neonPurple
                     )
                     CustomText(
-                        text = pedido.direccion,
-                        style = MaterialTheme.typography.bodySmall,
+                        text = pedido.direccion.uppercase(),
+                        fontSize = 13.sp,
                         color = Color.White.copy(alpha = 0.8f)
                     )
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     CustomText(
-                        text = "PRODUCTOS",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.secondary
+                        text = "MANIFIESTO DE HARDWARE //",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = neonPurple
                     )
-                    
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
                     pedido.detalles?.forEach { detalle ->
                         Row(
                             modifier = Modifier
@@ -164,8 +190,8 @@ fun OrderExpandableCard(pedido: Pedidos) {
                             horizontalArrangement = Arrangement.Start
                         ) {
                             CustomText(
-                                text = "• ${detalle.nombre_producto ?: "Producto"}",
-                                style = MaterialTheme.typography.bodySmall,
+                                text = "█  ${detalle.nombre_producto ?: "Ítem Desconocido"}",
+                                fontSize = 13.sp,
                                 color = Color.White.copy(alpha = 0.9f)
                             )
                         }

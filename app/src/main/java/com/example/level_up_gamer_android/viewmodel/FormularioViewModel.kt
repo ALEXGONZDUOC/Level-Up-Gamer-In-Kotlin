@@ -28,7 +28,6 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     private val _filteredProductos = MutableStateFlow<List<Producto>>(emptyList())
     val filteredProductos: StateFlow<List<Producto>> = _filteredProductos
 
-    // ...
     fun onSearchTextChange(text: String) {
         _searchText.value = text
         filtrarProductos()
@@ -39,10 +38,10 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
         _filteredProductos.value = if (query.isBlank()) {
             _productos.value
         } else {
-            _productos.value.filter { 
-                it.nombre.lowercase().contains(query) || 
-                it.categoria.lowercase().contains(query) ||
-                it.descripcion.lowercase().contains(query)
+            _productos.value.filter {
+                it.nombre.lowercase().contains(query) ||
+                        it.categoria.lowercase().contains(query) ||
+                        it.descripcion.lowercase().contains(query)
             }
         }
     }
@@ -98,7 +97,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     // --- Admin/Supervisor Methods ---
     fun cargarUsuarios() {
         if (_currentUser.value?.tipo_usuario_id != 1) return
-        
+
         viewModelScope.launch {
             _loading.value = true
             try {
@@ -106,7 +105,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                 if (response.isSuccessful) {
                     _usuarios.value = response.body() ?: emptyList()
                 }
-            } catch (e: Exception) { _error.value = "Error al cargar usuarios" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Fallo al escanear usuarios" }
             finally { _loading.value = false }
         }
     }
@@ -119,10 +118,10 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
             try {
                 val response = apiService.adminActualizarUsuario(usuario.id, usuario)
                 if (response.isSuccessful) {
-                    _error.value = "Usuario actualizado"
+                    _error.value = "SUCCESS // Base de datos sincronizada"
                     cargarUsuarios()
                 }
-            } catch (e: Exception) { _error.value = "Error al actualizar usuario" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Imposible sobrescribir registro" }
             finally { _loading.value = false }
         }
     }
@@ -135,10 +134,10 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
             try {
                 val response = apiService.eliminarUsuario(id)
                 if (response.isSuccessful) {
-                    _error.value = "Usuario eliminado"
+                    _error.value = "SUCCESS // Identidad borrada de la red"
                     cargarUsuarios()
                 }
-            } catch (e: Exception) { _error.value = "Error al eliminar usuario" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Error de borrado en núcleo" }
             finally { _loading.value = false }
         }
     }
@@ -156,7 +155,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                     _pedidos.value = pedidosList
                     calcularUsuarioTop(pedidosList)
                 }
-            } catch (e: Exception) { _error.value = "Error al cargar pedidos" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Error de lectura de transacciones" }
             finally { _loading.value = false }
         }
     }
@@ -172,7 +171,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
         val topUserId = statsMap.maxByOrNull { it.value.first }?.key
         if (topUserId != null) {
             val stats = statsMap[topUserId]!!
-            val userName = _usuarios.value.find { it.id == topUserId }?.nombre ?: "Usuario #$topUserId"
+            val userName = _usuarios.value.find { it.id == topUserId }?.nombre ?: "NetRunner #$topUserId"
             _usuarioTopVentas.value = UsuarioStats(userName, stats.first, stats.second)
         }
     }
@@ -187,7 +186,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                 if (response.isSuccessful) {
                     _topProductos.value = response.body() ?: emptyList()
                 }
-            } catch (e: Exception) { _error.value = "Error al cargar top productos" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Fallo al leer hardware popular" }
         }
     }
 
@@ -204,7 +203,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                     currentMap[periodo] = total
                     _ventasTotales.value = currentMap
                 }
-            } catch (e: Exception) { _error.value = "Error al cargar ventas" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Error de balance financiero" }
         }
     }
 
@@ -218,7 +217,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                 if (response.isSuccessful) {
                     _productoVentasPorDia.value = response.body() ?: emptyMap()
                 }
-            } catch (e: Exception) { _error.value = "Error al cargar ventas por día" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Fallo en métricas diarias" }
         }
     }
 
@@ -230,8 +229,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
     fun cargarDirecciones(usuarioId: Int? = null) {
         val currentUserId = _currentUser.value?.id ?: return
         val role = _currentUser.value?.tipo_usuario_id
-        
-        // Solo el dueño o Admin pueden cargar direcciones
+
         val targetUserId = usuarioId ?: currentUserId
         if (targetUserId != currentUserId && role != 1) return
 
@@ -240,14 +238,14 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
             try {
                 val response = apiService.getDirecciones(targetUserId)
                 if (response.isSuccessful) { _direcciones.value = response.body() ?: emptyList() }
-            } catch (e: Exception) { _error.value = "Error al cargar direcciones" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Coordenadas inaccesibles" }
             finally { _loading.value = false }
         }
     }
 
     fun agregarDireccion(direccion: Direccion) {
         val currentUserId = _currentUser.value?.id ?: return
-        if (direccion.usuario_id != currentUserId) return // Solo el dueño
+        if (direccion.usuario_id != currentUserId) return
 
         viewModelScope.launch {
             _loading.value = true
@@ -255,9 +253,9 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                 val response = apiService.crearDireccion(direccion)
                 if (response.isSuccessful) {
                     cargarDirecciones()
-                    _error.value = "Dirección guardada con éxito"
+                    _error.value = "SUCCESS // Nodo de entrega enlazado"
                 }
-            } catch (e: Exception) { _error.value = "Error al guardar dirección" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Imposible guardar coordenadas" }
             finally { _loading.value = false }
         }
     }
@@ -267,7 +265,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             try {
                 if (apiService.marcarPrincipal(direccionId, userId).isSuccessful) { cargarDirecciones() }
-            } catch (e: Exception) { _error.value = "Error al actualizar principal" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Fallo al asignar nodo primario" }
         }
     }
 
@@ -288,16 +286,16 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
             try {
                 val response = apiService.crearPedido(pedidoData)
                 if (response.isSuccessful) {
-                    val orderNum = response.body()?.get("pedido_id")?.toString() ?: "LVL-ERROR"
+                    val orderNum = response.body()?.get("pedido_id")?.toString() ?: "ERR-CORE"
                     clearCart()
                     cargarProductos()
                     onResult("LVL-$orderNum")
                 } else {
                     onResult(null)
-                    _error.value = "No se pudo procesar el pedido"
+                    _error.value = "CRITICAL_ERR // Transacción rechazada por el servidor"
                 }
             } catch (e: Exception) {
-                _error.value = "Error de conexión"
+                _error.value = "NET_ERR // Enlace satelital caído"
                 onResult(null)
             } finally { _loading.value = false }
         }
@@ -311,7 +309,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                 if (response.isSuccessful) {
                     val freshList = response.body() ?: emptyList()
                     _productos.value = freshList
-                    filtrarProductos() // Actualizar lista filtrada
+                    filtrarProductos()
                     val currentCart = _cart.value.toMutableMap()
                     val newCart = mutableMapOf<Producto, Int>()
                     freshList.forEach { p ->
@@ -320,7 +318,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                     }
                     _cart.value = newCart
                 }
-            } catch (e: Exception) { _error.value = "Error de conexión: ${e.message}" }
+            } catch (e: Exception) { _error.value = "NET_ERR // Fallo en la descarga del catálogo" }
             finally { _loading.value = false }
         }
     }
@@ -332,10 +330,10 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             try {
                 if (apiService.crearProducto(producto).isSuccessful) {
-                    _error.value = "Producto creado"
+                    _error.value = "SUCCESS // Ítem inyectado al inventario"
                     cargarProductos()
                 }
-            } catch (e: Exception) { _error.value = "Error: ${e.message}" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Error de inyección" }
         }
     }
 
@@ -346,10 +344,10 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             try {
                 if (apiService.editarProducto(producto.id, producto).isSuccessful) {
-                    _error.value = "Producto actualizado"
+                    _error.value = "SUCCESS // Modificación de hardware completada"
                     cargarProductos()
                 }
-            } catch (e: Exception) { _error.value = "Error: ${e.message}" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Error de modificación" }
         }
     }
 
@@ -360,10 +358,10 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             try {
                 if (apiService.eliminarProducto(id).isSuccessful) {
-                    _error.value = "Producto eliminado"
+                    _error.value = "SUCCESS // Ítem eliminado de la existencia"
                     cargarProductos()
                 }
-            } catch (e: Exception) { _error.value = "Error: ${e.message}" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Fallo al destruir ítem" }
         }
     }
 
@@ -380,15 +378,15 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                         sessionManager.saveUser(user)
                         onResult(true)
                     } else {
-                        _error.value = if (user?.activo == false) "Cuenta desactivada" else "Error de datos"
+                        _error.value = if (user?.activo == false) "SECURITY_ERR // Acceso revocado (Cuenta Desactivada)" else "DATA_ERR // Estructura corrupta"
                         onResult(false)
                     }
                 } else {
-                    _error.value = "Credenciales incorrectas"
+                    _error.value = "AUTH_ERR // Credenciales rechazadas por el firewall"
                     onResult(false)
                 }
             } catch (e: Exception) {
-                _error.value = "Error de conexión"
+                _error.value = "NET_ERR // Respuesta del servidor excedida"
                 onResult(false)
             } finally { _loading.value = false }
         }
@@ -410,36 +408,33 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                 val response = apiService.registrarUsuario(nuevo)
 
                 if (response.isSuccessful) {
-                    _error.value = "Registro exitoso"
-                    onResult(null) // Éxito total
+                    _error.value = "SUCCESS // Registro completado"
+                    onResult(null)
                 } else {
-                    // 🔍 Extraemos el cuerpo del error enviado por FastAPI
                     val errorBody = response.errorBody()?.string()
 
-                    // Intentamos capturar si el backend especificó el problema en el mensaje
                     val mensajeError = when {
-                        errorBody == null -> "Error al registrar"
+                        errorBody == null -> "REG_ERR // Fallo general"
                         errorBody.contains("email", ignoreCase = true) || errorBody.contains("correo", ignoreCase = true) -> {
-                            "El correo electrónico ya se encuentra registrado"
+                            "DUP_ERR // Correo ya registrado en la base"
                         }
                         errorBody.contains("nombre", ignoreCase = true) || errorBody.contains("usuario", ignoreCase = true) -> {
-                            "El nombre de usuario ya está en uso"
+                            "DUP_ERR // El alias de NetRunner ya está ocupado"
                         }
                         else -> {
-                            // Si FastAPI arroja un mensaje estructurado como {"detail": "..."}
                             if (errorBody.contains("detail")) {
-                                errorBody.substringAfter("\"detail\":\"").substringBefore("\"")
+                                "SERVER_ERR // " + errorBody.substringAfter("\"detail\":\"").substringBefore("\"")
                             } else {
-                                "Error en el servidor (${response.code()})"
+                                "SERVER_ERR // Código de error (${response.code()})"
                             }
                         }
                     }
 
                     _error.value = mensajeError
-                    onResult(mensajeError) // Se lo mandamos al formulario para que lo pinte en pantalla
+                    onResult(mensajeError)
                 }
             } catch (e: Exception) {
-                val errorNet = "Error de conexión: ${e.localizedMessage}"
+                val errorNet = "NET_ERR // Sin respuesta de red: ${e.localizedMessage}"
                 _error.value = errorNet
                 onResult(errorNet)
             } finally {
@@ -455,27 +450,25 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                 val response = apiService.verificarUsuario(mapOf("email" to email, "codigo" to codigo))
 
                 if (response.isSuccessful) {
-                    // El backend devuelve un mapa con la clave "mensaje" (ej: "Cuenta verificada con éxito")
-                    val msgExito = response.body()?.get("mensaje") ?: "¡Cuenta verificada con éxito!"
+                    val msgExito = response.body()?.get("mensaje") ?: "SUCCESS // Enlace de cuenta validado"
                     _error.value = null
                     onResult(true, msgExito)
                 } else {
-                    // 🔍 Extraemos el JSON de error de FastAPI
                     val errorBody = response.errorBody()?.string()
 
                     val msgError = when {
-                        errorBody == null -> "Error al verificar la cuenta"
+                        errorBody == null -> "VERIF_ERR // Fallo de desencriptación"
                         errorBody.contains("incorrecto", ignoreCase = true) || errorBody.contains("valido", ignoreCase = true) -> {
-                            "El código ingresado es incorrecto"
+                            "AUTH_ERR // Token de acceso erróneo"
                         }
                         errorBody.contains("expirado", ignoreCase = true) || errorBody.contains("tiempo", ignoreCase = true) -> {
-                            "El código ha expirado. Solicita uno nuevo"
+                            "AUTH_ERR // Token caducado. Solicita refresco"
                         }
                         else -> {
                             if (errorBody.contains("detail")) {
-                                errorBody.substringAfter("\"detail\":\"").substringBefore("\"")
+                                "VERIF_ERR // " + errorBody.substringAfter("\"detail\":\"").substringBefore("\"")
                             } else {
-                                "Código inválido o error de validación"
+                                "VERIF_ERR // Firma inválida"
                             }
                         }
                     }
@@ -484,7 +477,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                     onResult(false, msgError)
                 }
             } catch (e: Exception) {
-                val errorNet = "Error de red: No se pudo conectar con el servidor"
+                val errorNet = "NET_ERR // Servidor fuera de línea"
                 _error.value = errorNet
                 onResult(false, errorNet)
             } finally {
@@ -498,8 +491,8 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
             _loading.value = true
             try {
                 val response = apiService.solicitarRecuperacion(mapOf("email" to email))
-                onResult(response.isSuccessful, response.body()?.get("mensaje") ?: "")
-            } catch (e: Exception) { onResult(false, "Error") }
+                onResult(response.isSuccessful, response.body()?.get("mensaje") ?: "SUCCESS // Código de bypass enviado")
+            } catch (e: Exception) { onResult(false, "NET_ERR // Error de puente") }
             finally { _loading.value = false }
         }
     }
@@ -509,8 +502,8 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
             _loading.value = true
             try {
                 val response = apiService.resetPassword(mapOf("email" to email, "codigo" to codigo, "nueva_contrasena" to nueva))
-                onResult(response.isSuccessful, response.body()?.get("mensaje") ?: "")
-            } catch (e: Exception) { onResult(false, "Error") }
+                onResult(response.isSuccessful, response.body()?.get("mensaje") ?: "SUCCESS // Credenciales reescritas")
+            } catch (e: Exception) { onResult(false, "NET_ERR") }
             finally { _loading.value = false }
         }
     }
@@ -525,10 +518,10 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
                         _currentUser.value = updated
                         sessionManager.saveUser(updated)
                     }
-                    _error.value = "Perfil actualizado"
+                    _error.value = "SUCCESS // Perfil re-indexado"
                     cargarUsuarios()
                 }
-            } catch (e: Exception) { _error.value = "Error" }
+            } catch (e: Exception) { _error.value = "SYS_ERR // Edición fallida" }
         }
     }
 
@@ -543,7 +536,7 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
         val currentCart = _cart.value.toMutableMap()
         val cartItem = currentCart.keys.find { it.id == producto.id }
         val qty = (cartItem?.let { currentCart[it] } ?: 0) + 1
-        if (qty > producto.cantidad) { _error.value = "Sin stock"; return }
+        if (qty > producto.cantidad) { _error.value = "STOCK_ERR // Unidades excedidas en el inventario"; return }
         if (cartItem != null) currentCart[cartItem] = qty else currentCart[producto] = 1
         _cart.value = currentCart
     }

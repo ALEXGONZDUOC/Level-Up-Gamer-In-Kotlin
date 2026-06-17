@@ -12,14 +12,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.level_up_gamer_android.ui.components.CustomText
+import com.example.level_up_gamer_android.viewmodel.FormularioViewModel // Asegúrate de importar el ViewModel
 
 @Composable
 fun AppBottomBar(
     navController: NavController,
+    viewModel: FormularioViewModel, // 1. INYECTAMOS EL VIEWMODEL AQUÍ
     tipoUsuarioId: Int,
     isLoggedIn: Boolean,
     onLogout: () -> Unit
@@ -27,6 +31,10 @@ fun AppBottomBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     var showLogoutDialog by remember { mutableStateOf(false) }
+
+    // 2. ESCUCHAMOS EL ESTADO DEL CARRITO EN TIEMPO REAL
+    val cartMap by viewModel.cart.collectAsState()
+    val totalItemsInCart = cartMap.values.sum()
 
     // Identificar el "Home" de cada rol (Lógica V0.9)
     val homeRoute = when (tipoUsuarioId) {
@@ -37,7 +45,7 @@ fun AppBottomBar(
 
     val isAtHome = currentRoute == homeRoute
 
-    // Diálogo de Confirmación de Logout (Diseño Model-ish)
+    // Diálogo de Confirmación de Logout
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -81,7 +89,7 @@ fun AppBottomBar(
                         icon = { Icon(Icons.Default.Group, "Usuarios") },
                         label = { Text("Usuarios") },
                         selected = currentRoute == "admin_users",
-                        onClick = { 
+                        onClick = {
                             if (currentRoute != "admin_users") {
                                 navController.navigate("admin_users") {
                                     popUpTo("admin_users") { inclusive = true }
@@ -107,8 +115,25 @@ fun AppBottomBar(
                             indicatorColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f)
                         )
                     )
+
+                    // CARRITO DEL ADMIN CON NOTIFICACIONES
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.ShoppingCart, "Carrito") },
+                        icon = {
+                            BadgedBox(
+                                badge = {
+                                    if (totalItemsInCart > 0) {
+                                        Badge(
+                                            containerColor = Color(0xFF00F0FF), // Cian Neón
+                                            contentColor = Color.Black
+                                        ) {
+                                            Text(text = totalItemsInCart.toString(), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            ) {
+                                Icon(Icons.Default.ShoppingCart, "Carrito")
+                            }
+                        },
                         label = { Text("Carrito") },
                         selected = currentRoute?.startsWith("cart") == true,
                         onClick = { navController.navigate("cart") },
@@ -125,7 +150,7 @@ fun AppBottomBar(
                         icon = { Icon(Icons.Default.Assessment, "Ventas") },
                         label = { Text("Ventas") },
                         selected = currentRoute == "total_ventas",
-                        onClick = { 
+                        onClick = {
                             if (currentRoute != "total_ventas") {
                                 navController.navigate("total_ventas") {
                                     popUpTo("total_ventas") { inclusive = true }
@@ -169,7 +194,7 @@ fun AppBottomBar(
                         icon = { Icon(Icons.Default.Storefront, "Tienda") },
                         label = { Text("Tienda") },
                         selected = currentRoute == "home",
-                        onClick = { 
+                        onClick = {
                             if (currentRoute != "home") {
                                 navController.navigate("home") { popUpTo(0) }
                             }
@@ -182,13 +207,12 @@ fun AppBottomBar(
                         )
                     )
 
-                    // NUEVO: Mis Pedidos (Solo si está logueado como Usuario Normal)
                     if (isLoggedIn && tipoUsuarioId == 3) {
                         NavigationBarItem(
                             icon = { Icon(Icons.Default.ShoppingBag, "Pedidos") },
                             label = { Text("Pedidos") },
                             selected = currentRoute == "user_orders",
-                            onClick = { 
+                            onClick = {
                                 if (currentRoute != "user_orders") {
                                     navController.navigate("user_orders")
                                 }
@@ -202,8 +226,24 @@ fun AppBottomBar(
                         )
                     }
 
+                    // CARRITO DEL CLIENTE CON NOTIFICACIONES
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.ShoppingCart, "Carrito") },
+                        icon = {
+                            BadgedBox(
+                                badge = {
+                                    if (totalItemsInCart > 0) {
+                                        Badge(
+                                            containerColor = Color(0xFF00F0FF), // Cian Neón
+                                            contentColor = Color.Black
+                                        ) {
+                                            Text(text = totalItemsInCart.toString(), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            ) {
+                                Icon(Icons.Default.ShoppingCart, "Carrito")
+                            }
+                        },
                         label = { Text("Carrito") },
                         selected = currentRoute?.startsWith("cart") == true,
                         onClick = { navController.navigate("cart") },
@@ -218,12 +258,12 @@ fun AppBottomBar(
             }
 
             // --- SECCIÓN DERECHA: BOTÓN DINÁMICO ---
-            if (!isAtHome && currentRoute != "home" && tipoUsuarioId != 1 && tipoUsuarioId != 2) { 
+            if (!isAtHome && currentRoute != "home" && tipoUsuarioId != 1 && tipoUsuarioId != 2) {
                 NavigationBarItem(
                     icon = { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") },
                     label = { Text("Volver") },
                     selected = false,
-                    onClick = { 
+                    onClick = {
                         navController.navigate(homeRoute) {
                             popUpTo(homeRoute) { inclusive = true }
                         }

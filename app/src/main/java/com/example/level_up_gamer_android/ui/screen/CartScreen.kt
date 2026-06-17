@@ -30,29 +30,36 @@ fun CartScreen(
     val cartItems = cartMap.toList()
     val total = cartItems.sumOf { (producto, qty) -> producto.precio * qty }
 
+    // Paleta Cyberpunk Compartida
+    val neonCian = Color(0xFF00F0FF)
+    val neonPurple = Color(0xFFBD00FF)
+    val neonRed = Color(0xFFFF0055)
+    val neonGreen = Color(0xFF39FF14)
+    val textMuted = Color.White.copy(alpha = 0.5f)
+
     GradientSurface {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // 🧾 HEADER (Model Look)
+            // 🧾 HEADER (Cyberpunk Look)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 CustomText(
-                    text = "CARRITO",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.tertiary
+                    text = "CARRITO DE COMPRAS",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Black,
+                    color = neonPurple
                 )
                 Icon(
                     imageVector = Icons.Default.ShoppingCart,
                     contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    modifier = Modifier.size(28.dp),
+                    tint = neonCian
                 )
             }
 
@@ -61,10 +68,11 @@ fun CartScreen(
             if (targetUserId != null) {
                 val targetUser = viewModel.getUsuarioById(targetUserId)
                 CustomText(
-                    text = "Gestionando carrito de: ${targetUser?.nombre ?: "Usuario $targetUserId"}",
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "ACCESO PERMITIDO  Carrito de: ${targetUser?.nombre?.uppercase() ?: "USER_$targetUserId"}",
+                    color = neonCian,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
 
@@ -72,26 +80,26 @@ fun CartScreen(
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(bottom = 120.dp) // Alineación centrada real evitando la barra
+                        modifier = Modifier.padding(bottom = 120.dp)
                     ) {
                         Icon(
                             Icons.Default.ShoppingCart,
                             contentDescription = null,
                             modifier = Modifier.size(80.dp),
-                            tint = Color.White.copy(alpha = 0.2f)
+                            tint = Color.White.copy(alpha = 0.1f)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         CustomText(
-                            text = "Tu carrito está vacío",
-                            fontSize = 20.sp,
-                            color = Color.White.copy(alpha = 0.5f),
+                            text = "CARRITO VACIO",
+                            fontSize = 16.sp,
+                            color = textMuted,
                             fontWeight = FontWeight.Medium
                         )
                     }
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     items(cartItems) { (producto, quantity) ->
@@ -100,7 +108,11 @@ fun CartScreen(
                             quantity = quantity,
                             onIncrease = { if (targetUserId == null) viewModel.addToCart(producto) },
                             onDecrease = { if (targetUserId == null) viewModel.removeFromCart(producto) },
-                            onRemove = { if (targetUserId == null) viewModel.removeItemFromCart(producto) }
+                            onRemove = { if (targetUserId == null) viewModel.removeItemFromCart(producto) },
+                            neonCian = neonCian,
+                            neonPurple = neonPurple,
+                            neonRed = neonRed,
+                            textMuted = textMuted
                         )
                     }
                 }
@@ -113,14 +125,20 @@ fun CartScreen(
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            CustomText(text = "TOTAL A PAGAR:", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            CustomText(
+                                text = "TOTAL A PAGAR:",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White
+                            )
                             CustomText(
                                 text = "$${total.format3()}",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Black,
+                                color = neonGreen // Resalta la caja final en verde radiactivo
                             )
                         }
 
@@ -128,15 +146,15 @@ fun CartScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 CustomButton(
-                                    text = "Vaciar",
+                                    text = "VACIAR",
                                     onClick = { viewModel.clearCart() },
                                     modifier = Modifier.weight(1f)
                                 )
                                 CustomButton(
-                                    text = "Comprar",
+                                    text = "PROCESAR PAGO",
                                     onClick = onCheckoutClick,
                                     modifier = Modifier.weight(1f)
                                 )
@@ -150,7 +168,7 @@ fun CartScreen(
 }
 
 // ==========================================
-// COMPONENTE INTERNO CON BASURERO EN LA ESQUINA Y SUBTOTAL ABAJO
+// COMPONENTE INTERNO AJUSTADO CON MÁXIMA CLARIDAD
 // ==========================================
 @Composable
 fun CartItemCard(
@@ -158,7 +176,11 @@ fun CartItemCard(
     quantity: Int,
     onIncrease: () -> Unit,
     onDecrease: () -> Unit,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
+    neonCian: Color,
+    neonPurple: Color,
+    neonRed: Color,
+    textMuted: Color
 ) {
     CustomCard(
         modifier = Modifier
@@ -169,10 +191,10 @@ fun CartItemCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
-            verticalAlignment = Alignment.Top, // Alineación arriba para que la papelera quede en la esquina
+            verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 1. Imagen del Producto (Centrada verticalmente respecto a su espacio)
+            // 1. Imagen del Producto (Contenedor Arcade)
             Box(
                 modifier = Modifier
                     .size(70.dp)
@@ -184,92 +206,95 @@ fun CartItemCard(
                 ) {}
             }
 
-            // 2. Columna Central: Nombre, Precio Base y Controles Compactos
+            // 2. Columna Central: Datos y Controles
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .align(Alignment.CenterVertically) // Centrado vertical para equilibrar el diseño
+                    .align(Alignment.CenterVertically)
             ) {
+            CustomText(
+                text = producto.nombre,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            CustomText(
+                text = "$${producto.precio.format3()}",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = textMuted
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Selectores de cantidad compactos [cite: 15, 20]
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.wrapContentWidth()
+            ) {
+                IconButton(
+                    onClick = onDecrease,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                CustomText(text = "—", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color.White)
+            }
+
                 CustomText(
-                    text = producto.nombre,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
+                    text = quantity.toString(),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Black,
                     color = Color.White
                 )
 
-                CustomText(
-                    text = "$${producto.precio.format3()}",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // Controles de cantidad compactos colocados de manera inteligente abajo del nombre
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.wrapContentWidth()
+                IconButton(
+                    onClick = onIncrease,
+                    modifier = Modifier.size(24.dp)
                 ) {
-                    IconButton(
-                        onClick = onDecrease,
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        CustomText(text = "—", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                    }
-
-                    CustomText(
-                        text = quantity.toString(),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-
-                    IconButton(
-                        onClick = onIncrease,
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        CustomText(text = "+", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    }
-                }
+                CustomText(text = "+", fontSize = 13.sp, fontWeight = FontWeight.Black, color = neonCian)
             }
+            }
+        }
 
-            // 3. Columna Derecha: Basurero arriba y Subtotal abajo [Esquina Superior Derecha]
+            // 3. Columna Derecha: Basurero [Arriba] y Subtotal [Abajo]
             Column(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .align(Alignment.Top)
-                    .padding(top = 4.dp)
+                    .padding(top = 2.dp)
             ) {
-                // Tacho de basura en la pura esquina superior
-                IconButton(
-                    onClick = onRemove,
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Eliminar",
-                        tint = Color(0xFFFF0055) // Color glitch fucsia neón
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp)) // Separación vertical limpia
-
-                // Valor total calculado abajo del basurero
-                CustomText(
-                    text = "Subtotal:",
-                    fontSize = 10.sp,
-                    color = Color.White.copy(alpha = 0.5f)
-                )
-                CustomText(
-                    text = "$${(producto.precio * quantity).format3()}",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.secondary // Tu tono morado neón
+            // Tacho de basura en la esquina
+            IconButton(
+                onClick = onRemove,
+                modifier = Modifier.size(28.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Eliminar",
+                    tint = neonRed
                 )
             }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // INDICADORES DE SUBVALOR CORREGIDOS (Máxima iluminación neón)
+            CustomText(
+                text = "SUBTOTAL",
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                color = textMuted // Color de apoyo discreto
+            )
+            CustomText(
+                text = "$${(producto.precio * quantity).format3()}",
+                fontSize = 15.sp, // Aumentado ligeramente para legibilidad
+                fontWeight = FontWeight.Black,
+                color = neonCian // ⚡ ¡Cian Eléctrico ultrabrillante! Ya no se pierde con el fondo.
+            )
+        }
         }
     }
 }

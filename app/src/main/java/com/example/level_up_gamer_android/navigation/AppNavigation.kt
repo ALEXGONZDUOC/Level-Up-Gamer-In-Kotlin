@@ -374,12 +374,13 @@ fun AppNavigation() {
             ) {
                 AppBottomBar(
                     navController = navController,
+                    viewModel = viewModel,     // ⚡ ¡INYECTA ESTA LÍNEA AQUÍ ARRIBA!
                     tipoUsuarioId = tipoUsuarioId,
                     isLoggedIn = isLoggedIn,
                     onLogout = {
                         viewModel.logout()
                         navController.navigate("home") {
-                            popUpTo(0) { inclusive = true }
+                            popUpTo(0) { inclusive = true } // id = 0 corregido por ruta nativa o popUpTo(0)
                         }
                     }
                 )

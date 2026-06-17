@@ -46,7 +46,7 @@ fun HomeScreen(
 
     val tipoUsuarioId = currentUser?.tipo_usuario_id ?: 0 
     val snackbarHostState = remember { SnackbarHostState() }
-    val focusRequesterCart = remember { FocusRequester() }
+    remember { FocusRequester() }
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
