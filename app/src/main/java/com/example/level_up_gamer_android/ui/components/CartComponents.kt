@@ -52,7 +52,7 @@ fun CartItemCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            CartItemImage(
+            ProductoImage(
                 producto = producto,
                 modifier = Modifier.size(60.dp)
             )
@@ -125,41 +125,6 @@ fun CartItemCard(
     }
 }
 
-@Composable
-fun CartItemImage(producto: Producto, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val localImageRes = getLocalImageResource(context, producto.codigo)
-
-    when {
-        localImageRes != 0 && localImageRes != R.drawable.product_placeholder ->
-            Image(
-                painter = painterResource(id = localImageRes),
-                contentDescription = "Imagen de ${producto.nombre}",
-                modifier = modifier,
-                contentScale = ContentScale.Crop
-            )
-
-        producto.imagenUrl?.isNotEmpty() == true ->
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(producto.imagenUrl)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "Imagen de ${producto.nombre}",
-                modifier = modifier,
-                contentScale = ContentScale.Crop,
-                error = painterResource(id = R.drawable.product_placeholder)
-            )
-
-        else ->
-            Image(
-                painter = painterResource(id = R.drawable.product_placeholder),
-                contentDescription = "Imagen de placeholder",
-                modifier = modifier,
-                contentScale = ContentScale.Crop
-            )
-    }
-}
 
 @Composable
 fun EmptyCartView() {

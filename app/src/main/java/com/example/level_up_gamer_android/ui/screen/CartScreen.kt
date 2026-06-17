@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.level_up_gamer_android.model.Producto
 import com.example.level_up_gamer_android.ui.components.*
+import com.example.level_up_gamer_android.ui.components.ProductoImage
 import com.example.level_up_gamer_android.viewmodel.FormularioViewModel
 import com.example.level_up_gamer_android.utils.format3
 
@@ -194,17 +195,13 @@ fun CartItemCard(
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 1. Imagen del Producto (Contenedor Arcade)
-            Box(
+            // 1. Imagen del Producto
+            ProductoImage(
+                producto = producto,
                 modifier = Modifier
                     .size(70.dp)
                     .align(Alignment.CenterVertically)
-            ) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = Color.White.copy(alpha = 0.05f)
-                ) {}
-            }
+            )
 
             // 2. Columna Central: Datos y Controles
             Column(
