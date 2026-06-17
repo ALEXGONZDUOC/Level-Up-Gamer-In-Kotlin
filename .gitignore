@@ -1,3 +1,7 @@
+# Credenciales sensibles
+.env
+api/.env
+
 *.iml
 .gradle
 /local.properties

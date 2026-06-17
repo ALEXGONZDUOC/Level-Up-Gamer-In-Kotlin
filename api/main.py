@@ -8,12 +8,17 @@ import uvicorn
 import os
 import smtplib
 import random
+import time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 from datetime import date
 
 load_dotenv()
+
+# Almacén temporal de códigos: { email: {"codigo": str, "expira": float} }
+# Los códigos expiran en 10 minutos
+codigos_temp: dict = {}
 
 app = FastAPI()
 
@@ -114,6 +119,100 @@ def enviar_correo_confirmacion(email_destino: str, nombre_comprador: str, pedido
     except Exception as e:
         print(f"DEBUG ERROR CORREO: {e}")
 
+def enviar_correo_verificacion(email_destino: str, nombre: str, codigo: str):
+    gmail_user = os.getenv("GMAIL_USER")
+    gmail_pass = os.getenv("GMAIL_PASS")
+    if not gmail_user or not gmail_pass or "tu_correo" in gmail_user:
+        print("Error: Credenciales de Gmail no configuradas en .env")
+        return
+
+    msg = MIMEMultipart()
+    msg['From'] = f"Level Up Gamer <{gmail_user}>"
+    msg['To'] = email_destino
+    msg['Subject'] = "Verifica tu cuenta - Level Up Gamer"
+
+    html = f"""
+    <html>
+    <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6;">
+        <div style="max-width: 600px; margin: 20px auto; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;">
+            <div style="background-color: #6200EE; color: white; padding: 20px; text-align: center;">
+                <h1 style="margin: 0;">¡Bienvenido a Level Up Gamer!</h1>
+            </div>
+            <div style="padding: 30px;">
+                <p>Hola <strong>{nombre}</strong>,</p>
+                <p>Gracias por registrarte. Para activar tu cuenta, ingresa el siguiente código en la aplicación:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #6200EE; background: #f3e8ff; padding: 16px 32px; border-radius: 8px;">
+                        {codigo}
+                    </span>
+                </div>
+                <p style="color: #888; font-size: 0.9em;">Este código expira en <strong>10 minutos</strong>. Si no creaste esta cuenta, ignora este correo.</p>
+            </div>
+            <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 0.8em; color: #777;">
+                &copy; 2026 Level Up Gamer Store.
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    msg.attach(MIMEText(html, 'html'))
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(gmail_user, gmail_pass)
+            server.send_message(msg)
+            print(f"DEBUG: Correo de verificación enviado a {email_destino}")
+    except Exception as e:
+        print(f"DEBUG ERROR CORREO VERIFICACIÓN: {e}")
+
+
+def enviar_correo_recuperacion(email_destino: str, nombre: str, codigo: str):
+    gmail_user = os.getenv("GMAIL_USER")
+    gmail_pass = os.getenv("GMAIL_PASS")
+    if not gmail_user or not gmail_pass or "tu_correo" in gmail_user:
+        print("Error: Credenciales de Gmail no configuradas en .env")
+        return
+
+    msg = MIMEMultipart()
+    msg['From'] = f"Level Up Gamer <{gmail_user}>"
+    msg['To'] = email_destino
+    msg['Subject'] = "Recuperación de contraseña - Level Up Gamer"
+
+    html = f"""
+    <html>
+    <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6;">
+        <div style="max-width: 600px; margin: 20px auto; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;">
+            <div style="background-color: #B00020; color: white; padding: 20px; text-align: center;">
+                <h1 style="margin: 0;">Recuperación de Contraseña</h1>
+            </div>
+            <div style="padding: 30px;">
+                <p>Hola <strong>{nombre}</strong>,</p>
+                <p>Recibimos una solicitud para restablecer tu contraseña. Usa el siguiente código:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #B00020; background: #fdecea; padding: 16px 32px; border-radius: 8px;">
+                        {codigo}
+                    </span>
+                </div>
+                <p style="color: #888; font-size: 0.9em;">Este código expira en <strong>10 minutos</strong>. Si no solicitaste esto, ignora este correo.</p>
+            </div>
+            <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 0.8em; color: #777;">
+                &copy; 2026 Level Up Gamer Store.
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    msg.attach(MIMEText(html, 'html'))
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(gmail_user, gmail_pass)
+            server.send_message(msg)
+            print(f"DEBUG: Correo de recuperación enviado a {email_destino}")
+    except Exception as e:
+        print(f"DEBUG ERROR CORREO RECUPERACIÓN: {e}")
+
+
 # --- CONFIGURACIÓN DB ---
 db_config = {
     "host": "localhost",
@@ -200,31 +299,53 @@ def login(req: LoginRequest):
     finally: conn.close()
     
 @app.post("/usuarios")
-def registrar_usuario(u: UsuarioBase): # Usa el mismo modelo Pydantic que usas en el PUT
+def registrar_usuario(u: UsuarioBase, background_tasks: BackgroundTasks):
     conn = get_db_connection()
-    if not conn: 
+    if not conn:
         raise HTTPException(500, "Error de conexión con la base de datos")
     try:
         with conn.cursor() as cursor:
-            # 1. Validar primero si el correo electrónico ya está registrado (es UNIQUE en tu DB)
+            # 1. Validar duplicados
             cursor.execute("SELECT id FROM usuario WHERE email = %s", (u.email,))
             if cursor.fetchone():
                 raise HTTPException(400, "El correo electrónico ya se encuentra registrado")
-                
-            # 2. Insertar el nuevo usuario en la Base de Datos
-            # Nota: Usamos date.today() para mapear la fecha_creacion automáticamente desde el backend
+            cursor.execute("SELECT id FROM usuario WHERE nombre = %s", (u.nombre,))
+            if cursor.fetchone():
+                raise HTTPException(400, "El nombre de usuario ya está en uso")
+
+            # 2. Crear usuario como INACTIVO hasta que verifique su correo
+            hoy = date.today()
             query = """
                 INSERT INTO usuario (nombre, contrasena, email, tipo_usuario_id, activo, fecha_creacion)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, 0, %s)
             """
-            cursor.execute(query, (u.nombre, u.contrasena, u.email, u.tipo_usuario_id, 1 if u.activo else 0, date.today()))
+            cursor.execute(query, (u.nombre, u.contrasena, u.email, u.tipo_usuario_id, hoy))
             conn.commit()
-            
-            return {"mensaje": "Usuario creado correctamente"}
+            nuevo_id = cursor.lastrowid
+
+            # 3. Generar y guardar código de verificación (expira en 10 min)
+            codigo = str(random.randint(100000, 999999))
+            codigos_temp[u.email] = {"codigo": codigo, "expira": time.time() + 600}
+
+            # 4. Enviar correo de verificación en background
+            background_tasks.add_task(enviar_correo_verificacion, u.email, u.nombre, codigo)
+
+            # 5. Devolver el objeto usuario completo (el Android lo espera así)
+            return {
+                "id": nuevo_id,
+                "nombre": u.nombre,
+                "contrasena": u.contrasena,
+                "email": u.email,
+                "tipo_usuario_id": u.tipo_usuario_id,
+                "activo": False,
+                "fecha_creacion": str(hoy)
+            }
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(500, f"Error interno en el servidor: {str(e)}")
-    finally: 
-        conn.close()    
+        raise HTTPException(500, f"Error interno: {str(e)}")
+    finally:
+        conn.close()
     
 @app.put("/usuarios/{id}")
 def actualizar_usuario(id: int, u: UsuarioBase):
@@ -249,6 +370,85 @@ def eliminar_usuario(id: int):
             conn.commit()
             return {"mensaje": "Usuario eliminado correctamente"}
     finally: conn.close()
+
+
+@app.post("/usuarios/verificar")
+def verificar_usuario(req: dict, background_tasks: BackgroundTasks = None):
+    email = req.get("email", "")
+    codigo = req.get("codigo", "")
+
+    entrada = codigos_temp.get(email)
+    if not entrada:
+        raise HTTPException(400, "No hay un código pendiente para este correo")
+    if time.time() > entrada["expira"]:
+        codigos_temp.pop(email, None)
+        raise HTTPException(400, "El código ha expirado. Solicita uno nuevo")
+    if entrada["codigo"] != codigo:
+        raise HTTPException(400, "Código incorrecto")
+
+    # Activar usuario en la DB
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("UPDATE usuario SET activo = 1 WHERE email = %s", (email,))
+            conn.commit()
+        codigos_temp.pop(email, None)
+        return {"mensaje": "Cuenta verificada correctamente"}
+    finally:
+        conn.close()
+
+
+@app.post("/usuarios/recuperar")
+def solicitar_recuperacion(req: dict, background_tasks: BackgroundTasks):
+    email = req.get("email", "")
+    if not email:
+        raise HTTPException(400, "El correo es requerido")
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT nombre FROM usuario WHERE email = %s", (email,))
+            user = cursor.fetchone()
+            if not user:
+                raise HTTPException(404, "No existe una cuenta con ese correo")
+
+            codigo = str(random.randint(100000, 999999))
+            codigos_temp[email] = {"codigo": codigo, "expira": time.time() + 600}
+
+            background_tasks.add_task(enviar_correo_recuperacion, email, user["nombre"], codigo)
+            return {"mensaje": "Código de recuperación enviado a tu correo"}
+    finally:
+        conn.close()
+
+
+@app.post("/usuarios/reset-password")
+def reset_password(req: dict):
+    email = req.get("email", "")
+    codigo = req.get("codigo", "")
+    nueva_contrasena = req.get("nueva_contrasena", "")
+
+    if not nueva_contrasena or len(nueva_contrasena) < 6:
+        raise HTTPException(400, "La contraseña debe tener al menos 6 caracteres")
+
+    entrada = codigos_temp.get(email)
+    if not entrada:
+        raise HTTPException(400, "No hay un código pendiente para este correo")
+    if time.time() > entrada["expira"]:
+        codigos_temp.pop(email, None)
+        raise HTTPException(400, "El código ha expirado. Solicita uno nuevo")
+    if entrada["codigo"] != codigo:
+        raise HTTPException(400, "Código incorrecto")
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("UPDATE usuario SET contrasena = %s WHERE email = %s", (nueva_contrasena, email))
+            conn.commit()
+        codigos_temp.pop(email, None)
+        return {"mensaje": "Contraseña actualizada correctamente"}
+    finally:
+        conn.close()
+
 
 # --- PRODUCTOS ---
 

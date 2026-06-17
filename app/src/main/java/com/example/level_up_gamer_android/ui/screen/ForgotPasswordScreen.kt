@@ -101,7 +101,7 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: FormularioView
             }
 
             if (mensaje.isNotEmpty()) {
-                CustomText(text = mensaje, color = if (mensaje.contains("Éxito") || mensaje.contains("enviado")) Color.Green else Color.Yellow)
+                CustomText(text = mensaje, color = if (mensaje.contains("SUCCESS", ignoreCase = true) || mensaje.contains("enviado", ignoreCase = true) || mensaje.contains("correctamente", ignoreCase = true)) Color.Green else Color.Yellow)
             }
 
             TextButton(onClick = { navController.popBackStack() }) {

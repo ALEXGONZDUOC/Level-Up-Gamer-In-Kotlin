@@ -91,13 +91,9 @@ fun VerificationScreen(navController: NavController, viewModel: FormularioViewMo
             if (puedeReenviar) {
                 TextButton(
                     onClick = {
-                        // Cambia 'solicitarRecuperacion' por tu función real del ViewModel si es para registro
                         viewModel.solicitarRecuperacion(email) { success, msg ->
                             mensaje = msg
-                            if (success) {
-                                // Reiniciamos el temporizador si el reenvío fue exitoso
-                                tiempoRestante = 30
-                            }
+                            if (success) tiempoRestante = 30
                         }
                     }
                 ) {
