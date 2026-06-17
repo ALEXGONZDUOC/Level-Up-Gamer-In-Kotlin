@@ -48,9 +48,10 @@ fun AddressSelectionScreen(
 
     LaunchedEffect(selectedDireccion) {
         selectedDireccion?.let {
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                LatLng(it.latitud, it.longitud), 15f
-            )
+            val tieneCoords = it.latitud != 0.0 && it.longitud != 0.0
+            val destino = if (tieneCoords) LatLng(it.latitud, it.longitud) else santiago
+            val zoom = if (tieneCoords) 15f else 12f
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(destino, zoom)
         }
     }
 
@@ -98,7 +99,7 @@ fun AddressSelectionScreen(
                         AddressChip(direccion = dir, isSelected = selectedDireccion?.id == dir.id, onSelect = { selectedDireccion = dir })
                     }
                     if (!isTargetingOther) {
-                        item { AddAddressChip { showDialog = true } }
+                        item { AddAddressChip { navController.navigate("add_address") } }
                     }
                 }
 

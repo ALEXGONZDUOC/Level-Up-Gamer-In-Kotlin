@@ -97,7 +97,7 @@ fun PaymentScreen(
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                     title = {
                         Text(
-                            text = "TERMINAL DE PAGO //",
+                            text = "PUNTO DE PAGO",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Black,
                             color = neonPurple
