@@ -1,81 +1,167 @@
-# 🎮 Level Up Gamer - V1.0 (Official Release)
+# 🎮 Level Up Gamer - Android App
 
 ## 📝 Descripción
-**Level Up Gamer** es un ecosistema de comercio electrónico diseñado específicamente para la comunidad gamer. El sistema integra una aplicación móvil nativa desarrollada en **Android (Jetpack Compose)** y un backend robusto con **FastAPI**, utilizando **MySQL** como motor de persistencia transaccional.
-
-El proyecto destaca por su sistema de roles dinámico, gestión de inventario en tiempo real y reportes estadísticos avanzados para la toma de decisiones.
+**Level Up Gamer** es una aplicación móvil nativa Android orientada a la venta de productos gaming (periféricos, consolas, accesorios) para el mercado chileno. Integra un backend REST con **FastAPI** y base de datos **MySQL**, con flujos completos de autenticación, catálogo, carrito, pago y gestión de direcciones.
 
 ---
 
 ## 🚀 Tecnologías Utilizadas
 
-### Frontend (Móvil)
-*   **Lenguaje:** Kotlin
-*   **UI:** Jetpack Compose (Modern Declarative UI)
-*   **Arquitectura:** MVVM (Model-View-ViewModel)
-*   **Networking:** Retrofit 2 & OkHttp
-*   **Imágenes:** Coil (Image Loading)
-*   **Maps:** Google Maps Compose Utility
-*   **Inyección de Dependencias:** ViewModel & StateFlow para reactividad.
+### Frontend (Android)
+| Tecnología | Versión | Uso |
+|---|---|---|
+| Kotlin | 2.0 | Lenguaje principal |
+| Jetpack Compose | 1.6 | UI declarativa |
+| MVVM + StateFlow | — | Arquitectura y reactividad |
+| Retrofit2 + Gson | 2.9 | Cliente HTTP / JSON |
+| Coil (AsyncImage) | 2.5 | Carga de imágenes |
+| Google Maps Compose | 4.4.1 | Mapas y geolocalización |
 
 ### Backend (API)
-*   **Framework:** FastAPI (Python 3.9+)
-*   **Base de Datos:** MySQL 8.0
-*   **ORM/Driver:** PyMySQL
-*   **Seguridad:** Validación de roles y estados de cuenta.
-*   **Notificaciones:** SMTP (Gmail) para confirmación automática de pedidos.
+| Tecnología | Uso |
+|---|---|
+| FastAPI (Python) | Framework REST asíncrono |
+| Uvicorn (ASGI) | Servidor de producción |
+| PyMySQL | Conector MySQL |
+| smtplib + Gmail | Envío de correos SMTP |
+| python-dotenv | Variables de entorno seguras |
+
+### Base de Datos
+- **MySQL 8.0** — 5 tablas relacionales con claves foráneas y CASCADE
+- Tablas: `usuario`, `producto`, `pedidos`, `detalle_pedido`, `direcciones`
 
 ---
 
 ## 🔑 Sistema de Roles
 
-El sistema adapta su interfaz y capacidades según el tipo de usuario logueado:
+| Rol | ID | Acceso |
+|---|---|---|
+| Administrador | 1 | Gestión de usuarios, catálogo y dashboard |
+| Supervisor | 2 | Métricas y reportes de ventas |
+| Usuario Final | 3 | Catálogo, carrito, pago, pedidos y direcciones |
 
-1.  **Administrador (ID: 1):** Control total de usuarios (activar/desactivar), gestión de catálogos y acceso al dashboard de gestión.
-2.  **Supervisor (ID: 2):** Enfoque en métricas. Visualiza gráficos de ventas por día/semana/mes y rendimiento detallado por producto.
-3.  **Usuario Final (ID: 3):** Experiencia de compra completa: catálogo interactivo, carrito de compras, gestión de múltiples direcciones y seguimiento de pedidos.
+---
+
+## 📱 Módulos de la Aplicación
+
+### 🔐 Autenticación
+- Login con usuario y contraseña (ver/ocultar con ícono ojito)
+- Registro con validación de campos
+- **Verificación de email obligatoria** — código de 6 dígitos, cuenta `activo=0` hasta verificar
+- Recuperación de contraseña por código de correo (2 pasos)
+- **Cambio de contraseña desde perfil** — requiere código de verificación al correo
+
+### 🛍️ Catálogo y Carrito
+- Catálogo con 30 productos en 6 categorías con imágenes `.png`
+- Filtros por categoría
+- Detalle de producto
+- Carrito con imágenes, modificar cantidad, eliminar y total en CLP
+
+### 💳 Pago
+- Formato automático de tarjeta `XXXX XXXX XXXX XXXX`
+- Formato de fecha `MM/AA`
+- CVV enmascarado con `PasswordVisualTransformation`
+- Validación visual con bordes rojos neón en campos inválidos
+- Confirmación con número de orden en cian neón
+
+### 📍 Direcciones
+- **Pantalla "Mis Direcciones"** accesible desde Perfil
+- Listar todas las direcciones como tarjetas expandibles
+- Al expandir: ver detalle completo + mapa Google Maps con pin
+- **Editar** dirección con switch booleano `es_principal`
+- **Marcar como principal** — la anterior se desactiva automáticamente en la BD
+- **Eliminar** con diálogo de confirmación
+- Agregar nueva dirección con mapa interactivo en 3 pasos:
+  1. Búsqueda por texto (Geocoder)
+  2. Mapa con pin arrastrable
+  3. Formulario auto-rellenado con coordenadas exactas
+
+### 📦 Pedidos
+- Historial de pedidos con fecha, total y dirección de envío
+- Detalle de productos por pedido
+
+### 👤 Perfil
+- Editar nombre y correo
+- Cambiar contraseña con verificación por código de correo
+- Acceso directo a **Mis Direcciones**
+
+---
+
+## 🔒 Seguridad
+
+| Medida | Implementación |
+|---|---|
+| Credenciales SMTP | Archivo `api/.env` en `.gitignore` |
+| CVV enmascarado | `PasswordVisualTransformation` |
+| Ver/ocultar contraseña | Ícono ojito en todos los formularios |
+| Verificación de email | `activo=0` hasta confirmar código |
+| Códigos de un solo uso | `codigos_temp` se elimina tras verificar |
+| Datos de tarjeta | No se almacenan en la BD |
+| Propiedad de direcciones | API valida `usuario_id` antes de modificar |
+
+---
+
+## 🌐 Endpoints de la API
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/usuarios` | Registro + envío código verificación |
+| POST | `/usuarios/verificar` | Activar cuenta con código |
+| POST | `/usuarios/recuperar` | Enviar código de recuperación |
+| POST | `/usuarios/reset-password` | Cambiar contraseña con código |
+| GET | `/usuarios/{id}/direcciones` | Listar direcciones del usuario |
+| POST | `/direcciones` | Crear nueva dirección |
+| PUT | `/direcciones/{id}` | Editar dirección (incluye `es_principal`) |
+| PUT | `/direcciones/{id}/principal` | Marcar/desmarcar principal (booleano) |
+| DELETE | `/direcciones/{id}` | Eliminar dirección |
+| GET | `/productos` | Listar catálogo |
+| POST | `/pedidos` | Crear pedido |
+| GET | `/pedidos/{usuario_id}` | Historial de pedidos |
 
 ---
 
 ## 🛠️ Instalación y Configuración
 
 ### 1. Backend (API)
-Navega a la carpeta `/api` y sigue estos pasos:
 ```bash
-# Instalar dependencias
+cd api
 pip install fastapi uvicorn pymysql python-dotenv
-
-# Configurar variables de entorno
-# Crea un archivo .env basado en .env.example
-GMAIL_USER="tu_correo@gmail.com"
-GMAIL_PASS="tu_contraseña_de_aplicacion"
-
-# Iniciar servidor
-python main.py
 ```
-*La API correrá por defecto en `http://localhost:3000`.*
+Crear archivo `api/.env`:
+```env
+GMAIL_USER=tu_correo@gmail.com
+GMAIL_PASS=tu_contraseña_de_aplicacion
+```
+Iniciar servidor:
+```bash
+uvicorn main:app --host 0.0.0.0 --port 3000 --reload
+```
 
 ### 2. Base de Datos
-Importa el archivo `/DB/database.sql` en tu servidor MySQL para inicializar las tablas y los datos de prueba.
+```bash
+mysql -u root -p < DB/database.sql
+```
 
 ### 3. Aplicación Android
-*   Abre el proyecto en **Android Studio**.
-*   Asegúrate de configurar la IP de tu servidor en `RetrofitClient.kt`.
-*   Sincroniza con Gradle y ejecuta en un emulador o dispositivo físico (Min SDK 27).
+- Abrir en **Android Studio**
+- Configurar IP del servidor en `RetrofitClient.kt`
+  - Emulador: `http://10.0.2.2:3000/`
+  - Dispositivo físico: `http://<IP_LOCAL>:3000/`
+- Sincronizar Gradle y ejecutar (Min SDK 26)
 
 ---
 
-## 📊 Características Destacadas
-*   **Persistencia Transaccional:** El sistema asegura que el stock se descuente solo si el pedido se guarda correctamente en la base de datos (Operaciones ACID).
-*   **UX Gamer:** Interfaz personalizada con fuentes "Orbitron", gradientes oscuros y animaciones fluidas.
-*   **Geolocalización:** Gestión de direcciones mediante coordenadas para futura integración logística.
-*   **Reportes en Tiempo Real:** Los supervisores ven cambios inmediatos en las gráficas tras cada venta.
+## 📊 Estadísticas del Proyecto
+
+| Indicador | Valor |
+|---|---|
+| Casos de prueba ejecutados | 43 (100% aprobados) |
+| Pruebas de seguridad | 6 (100% aprobadas) |
+| Mejoras implementadas | 10+ |
+| Endpoints REST | 12 |
+| Productos en catálogo | 30 en 6 categorías |
+| Pantallas Android | 17 screens |
 
 ---
 
-## 📄 Documentación Adicional
-*   [Manual del Sistema](DOCUMENTACION_SISTEMA.md)
-*   [Plan de Pruebas (IEEE 829)](PLAN_DE_PRUEBAS_IEEE829.md)
-
----
-*Desarrollado como proyecto final de Ingeniería de Software - 2026*
+*Proyecto TPY1101 – Taller Aplicado de Programación | DuocUC | Junio 2026 | Skarlett Tropan*
