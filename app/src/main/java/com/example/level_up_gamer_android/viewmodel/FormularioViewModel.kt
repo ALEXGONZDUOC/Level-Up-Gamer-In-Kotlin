@@ -260,12 +260,30 @@ class FormularioViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    fun establecerPrincipal(direccionId: Int) {
+    fun establecerPrincipal(direccionId: Int, esPrincipal: Boolean = true) {
         val userId = _currentUser.value?.id ?: return
         viewModelScope.launch {
             try {
-                if (apiService.marcarPrincipal(direccionId, userId).isSuccessful) { cargarDirecciones() }
-            } catch (e: Exception) { _error.value = "SYS_ERR // Fallo al asignar nodo primario" }
+                if (apiService.marcarPrincipal(direccionId, userId, mapOf("es_principal" to esPrincipal)).isSuccessful) {
+                    cargarDirecciones()
+                }
+            } catch (e: Exception) { _error.value = "Error al actualizar la dirección principal" }
+        }
+    }
+
+    fun actualizarDireccion(direccion: Direccion) {
+        viewModelScope.launch {
+            try {
+                if (apiService.actualizarDireccion(direccion.id, direccion).isSuccessful) { cargarDirecciones() }
+            } catch (e: Exception) { _error.value = "Error al actualizar la dirección" }
+        }
+    }
+
+    fun eliminarDireccion(direccionId: Int) {
+        viewModelScope.launch {
+            try {
+                if (apiService.eliminarDireccion(direccionId).isSuccessful) { cargarDirecciones() }
+            } catch (e: Exception) { _error.value = "Error al eliminar la dirección" }
         }
     }
 

@@ -522,14 +522,70 @@ def crear_direccion(d: DireccionBase):
     finally: conn.close()
 
 @app.put("/direcciones/{id}/principal")
-def marcar_principal(id: int, usuario_id: int = Query(...)):
+def marcar_principal(id: int, usuario_id: int = Query(...), req: dict = None):
+    es_principal = (req or {}).get("es_principal", True)
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("UPDATE direcciones SET es_principal=0 WHERE usuario_id=%s", (usuario_id,))
-            cursor.execute("UPDATE direcciones SET es_principal=1 WHERE id=%s", (id,))
+            # Verificar que la dirección pertenece al usuario
+            cursor.execute("SELECT id FROM direcciones WHERE id=%s AND usuario_id=%s", (id, usuario_id))
+            if not cursor.fetchone():
+                raise HTTPException(404, "Dirección no encontrada para este usuario")
+            if es_principal:
+                # Quitar principal a todas las del usuario y asignar a esta
+                cursor.execute("UPDATE direcciones SET es_principal=0 WHERE usuario_id=%s", (usuario_id,))
+                cursor.execute("UPDATE direcciones SET es_principal=1 WHERE id=%s AND usuario_id=%s", (id, usuario_id))
+            else:
+                # Solo quitar el principal de esta dirección
+                cursor.execute("UPDATE direcciones SET es_principal=0 WHERE id=%s AND usuario_id=%s", (id, usuario_id))
             conn.commit()
-            return {"mensaje": "Dirección principal actualizada"}
+            # Devolver lista actualizada ordenada
+            cursor.execute("SELECT * FROM direcciones WHERE usuario_id=%s ORDER BY es_principal DESC", (usuario_id,))
+            data = cursor.fetchall()
+            for d in data: d["es_principal"] = bool(d["es_principal"])
+            return {
+                "mensaje": "Dirección marcada como principal" if es_principal else "Dirección desmarcada como principal",
+                "es_principal": es_principal,
+                "direcciones": data
+            }
+    finally: conn.close()
+
+@app.put("/direcciones/{id}")
+def actualizar_direccion(id: int, d: DireccionBase):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Verificar que la dirección pertenece al usuario
+            cursor.execute("SELECT id FROM direcciones WHERE id=%s AND usuario_id=%s", (id, d.usuario_id))
+            if not cursor.fetchone():
+                raise HTTPException(404, "Dirección no encontrada")
+            # Si se marca como principal, quitar el principal a las demás
+            if d.es_principal:
+                cursor.execute("UPDATE direcciones SET es_principal=0 WHERE usuario_id=%s", (d.usuario_id,))
+            cursor.execute(
+                """UPDATE direcciones
+                   SET nombre_etiqueta=%s, calle=%s, ciudad=%s,
+                       referencias=%s, latitud=%s, longitud=%s, es_principal=%s
+                   WHERE id=%s AND usuario_id=%s""",
+                (d.nombre_etiqueta, d.calle, d.ciudad,
+                 d.referencias, d.latitud, d.longitud, d.es_principal, id, d.usuario_id)
+            )
+            conn.commit()
+            # Devolver dirección actualizada
+            cursor.execute("SELECT * FROM direcciones WHERE id=%s", (id,))
+            result = cursor.fetchone()
+            result["es_principal"] = bool(result["es_principal"])
+            return {"mensaje": "Dirección actualizada", "direccion": result}
+    finally: conn.close()
+
+@app.delete("/direcciones/{id}")
+def eliminar_direccion(id: int):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM direcciones WHERE id=%s", (id,))
+            conn.commit()
+            return {"mensaje": "Dirección eliminada"}
     finally: conn.close()
 
 # --- PEDIDOS ---

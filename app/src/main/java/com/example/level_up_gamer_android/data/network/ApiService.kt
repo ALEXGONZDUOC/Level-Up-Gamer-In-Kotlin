@@ -27,7 +27,17 @@ interface ApiService {
     suspend fun crearDireccion(@Body direccion: Direccion): Response<Direccion>
 
     @PUT("direcciones/{id}/principal")
-    suspend fun marcarPrincipal(@Path("id") id: Int, @Query("usuario_id") usuarioId: Int): Response<Map<String, String>>
+    suspend fun marcarPrincipal(
+        @Path("id") id: Int,
+        @Query("usuario_id") usuarioId: Int,
+        @Body body: Map<String, Boolean>
+    ): Response<Map<String, Any>>
+
+    @PUT("direcciones/{id}")
+    suspend fun actualizarDireccion(@Path("id") id: Int, @Body direccion: Direccion): Response<Map<String, String>>
+
+    @DELETE("direcciones/{id}")
+    suspend fun eliminarDireccion(@Path("id") id: Int): Response<Map<String, String>>
 
     @POST("pedidos")
     suspend fun crearPedido(@Body pedido: Map<String, @JvmSuppressWildcards Any>): Response<Map<String, Any>>

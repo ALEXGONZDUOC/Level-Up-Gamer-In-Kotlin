@@ -213,9 +213,7 @@ fun AppBottomBar(
                             label = { Text("Pedidos") },
                             selected = currentRoute == "user_orders",
                             onClick = {
-                                if (currentRoute != "user_orders") {
-                                    navController.navigate("user_orders")
-                                }
+                                if (currentRoute != "user_orders") navController.navigate("user_orders")
                             },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = MaterialTheme.colorScheme.tertiary,

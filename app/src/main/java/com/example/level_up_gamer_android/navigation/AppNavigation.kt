@@ -355,6 +355,11 @@ fun AppNavigation() {
                 AddAddressScreen(navController, viewModel)
             }
 
+            // Mis Direcciones
+            composable("direcciones") {
+                DireccionesScreen(navController, viewModel)
+            }
+
             // Mis Pedidos (Solo Usuario)
             composable("user_orders") {
                 UserOrdersScreen(navController, viewModel)
