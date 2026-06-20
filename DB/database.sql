@@ -144,3 +144,4 @@ INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario) V
 -- FIN DEL SCRIPT
 -- ======================================================
 select *from producto;
+UPDATE producto SET imagenUrl = REPLACE(imagenUrl, '.jpg', '.png') WHERE id > 0 AND imagenUrl LIKE '%.jpg';

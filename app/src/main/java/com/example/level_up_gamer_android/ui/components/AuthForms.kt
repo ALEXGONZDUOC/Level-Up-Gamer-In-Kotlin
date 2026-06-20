@@ -227,6 +227,13 @@ fun UpdateProfileForm(
     var contrasena by remember { mutableStateOf("") }
     var updatePasswordVisible by remember { mutableStateOf(false) }
 
+    // Estado del flujo de cambio de contraseña con código
+    var codigoEnviado by remember { mutableStateOf(false) }
+    var codigo by remember { mutableStateOf("") }
+    var mensajeCodigo by remember { mutableStateOf<String?>(null) }
+    var mensajeCodigoExito by remember { mutableStateOf(false) }
+    var enviandoCodigo by remember { mutableStateOf(false) }
+
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -238,7 +245,7 @@ fun UpdateProfileForm(
             text = if (targetUserId != null) "Editar Usuario: ${userToEdit?.nombre}" else "Actualizar Perfil",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 24.dp),
-            color = AppStyles.Cards.BorderColor // Violeta Neón
+            color = AppStyles.Cards.BorderColor
         )
 
         CustomTextField(
@@ -259,9 +266,18 @@ fun UpdateProfileForm(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // ── Campo nueva contraseña ──────────────────────────────────────
         CustomTextField(
             value = contrasena,
-            onValueChange = { contrasena = it },
+            onValueChange = {
+                contrasena = it
+                // Si el usuario borra la contraseña, resetea el flujo de código
+                if (it.isBlank()) {
+                    codigoEnviado = false
+                    codigo = ""
+                    mensajeCodigo = null
+                }
+            },
             label = "Nueva contraseña (opcional)",
             isPassword = !updatePasswordVisible,
             modifier = Modifier.fillMaxWidth(),
@@ -276,6 +292,93 @@ fun UpdateProfileForm(
             }
         )
 
+        // ── Botón "Solicitar código" (solo si escribió contraseña nueva) ─
+        if (contrasena.isNotBlank() && !codigoEnviado) {
+            Spacer(modifier = Modifier.height(12.dp))
+            CustomButton(
+                text = if (enviandoCodigo) "Enviando..." else "Solicitar código al correo",
+                enabled = !enviandoCodigo,
+                onClick = {
+                    val emailTarget = userToEdit?.email ?: email
+                    if (emailTarget.isBlank()) {
+                        mensajeCodigo = "No se encontró el correo del usuario"
+                        return@CustomButton
+                    }
+                    enviandoCodigo = true
+                    viewModel.solicitarRecuperacion(emailTarget) { ok, msg ->
+                        enviandoCodigo = false
+                        if (ok) {
+                            codigoEnviado = true
+                            mensajeCodigoExito = true
+                            mensajeCodigo = "Código enviado a $emailTarget"
+                        } else {
+                            mensajeCodigo = msg
+                            mensajeCodigoExito = false
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // ── Campo código + botón confirmar (una vez enviado el código) ───
+        if (codigoEnviado) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            mensajeCodigo?.let {
+                CustomText(
+                    text = it,
+                    color = if (mensajeCodigoExito) Color(0xFF00FF88) else Color(0xFFFF0055),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
+            CustomTextField(
+                value = codigo,
+                onValueChange = { if (it.length <= 6) codigo = it },
+                label = "Código recibido en tu correo",
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            CustomButton(
+                text = "Confirmar cambio de contraseña",
+                enabled = codigo.length == 6,
+                onClick = {
+                    val emailTarget = userToEdit?.email ?: email
+                    viewModel.resetPassword(emailTarget, codigo, contrasena) { ok, msg ->
+                        if (ok) {
+                            // Cambio exitoso: actualiza nombre/email sin tocar contraseña
+                            userToEdit?.let { user ->
+                                viewModel.actualizarUsuario(user.copy(nombre = nombre, email = email))
+                            }
+                            contrasena = ""
+                            codigo = ""
+                            codigoEnviado = false
+                            mensajeCodigo = "Contraseña actualizada correctamente"
+                            mensajeCodigoExito = true
+                            onUpdateSuccess()
+                        } else {
+                            mensajeCodigo = msg
+                            mensajeCodigoExito = false
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+            TextButton(onClick = {
+                codigoEnviado = false
+                codigo = ""
+                mensajeCodigo = null
+            }) {
+                CustomText("Reenviar código", color = Color(0xFF00E5FF))
+            }
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
 
         mensaje?.let {
@@ -287,20 +390,18 @@ fun UpdateProfileForm(
             )
         }
 
-        CustomButton(
-            text = "Actualizar",
-            onClick = {
-                userToEdit?.let { user ->
-                    val updatedUser = user.copy(
-                        nombre = nombre,
-                        email = email,
-                        contrasena = if (contrasena.isNotBlank()) contrasena else user.contrasena
-                    )
-                    viewModel.actualizarUsuario(updatedUser)
-                    onUpdateSuccess()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
+        // ── Botón actualizar (solo nombre y email, sin cambio de clave) ──
+        if (contrasena.isBlank()) {
+            CustomButton(
+                text = "Actualizar",
+                onClick = {
+                    userToEdit?.let { user ->
+                        viewModel.actualizarUsuario(user.copy(nombre = nombre, email = email))
+                        onUpdateSuccess()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }

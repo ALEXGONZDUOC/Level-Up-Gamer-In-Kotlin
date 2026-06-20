@@ -2,11 +2,13 @@ package com.example.level_up_gamer_android.ui.screen
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,7 +25,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddressSelectionScreen(
     navController: NavController,
@@ -94,12 +96,60 @@ fun AddressSelectionScreen(
 
                 CustomText("Tus direcciones", modifier = Modifier.padding(horizontal = 16.dp), fontSize = 18.sp)
 
-                LazyRow(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(direcciones) { dir ->
-                        AddressChip(direccion = dir, isSelected = selectedDireccion?.id == dir.id, onSelect = { selectedDireccion = dir })
+                FlowRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    direcciones.forEach { dir ->
+                        AddressChip(
+                            direccion = dir,
+                            isSelected = selectedDireccion?.id == dir.id,
+                            onSelect = { selectedDireccion = dir }
+                        )
                     }
                     if (!isTargetingOther) {
-                        item { AddAddressChip { navController.navigate("add_address") } }
+                        AddAddressChip { navController.navigate("add_address") }
+                    }
+                }
+
+                // Botón "Marcar como principal" cuando hay una dirección seleccionada
+                selectedDireccion?.let { dir ->
+                    if (!isTargetingOther) {
+                        val esPrincipal = dir.es_principal
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (esPrincipal) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                                contentDescription = null,
+                                tint = if (esPrincipal) Color(0xFFFFD700) else MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            if (esPrincipal) {
+                                CustomText(
+                                    text = "Dirección principal",
+                                    fontSize = 14.sp,
+                                    color = Color(0xFFFFD700)
+                                )
+                            } else {
+                                TextButton(
+                                    onClick = { viewModel.establecerPrincipal(dir.id) }
+                                ) {
+                                    CustomText(
+                                        text = "Marcar como principal",
+                                        fontSize = 14.sp,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -145,7 +195,18 @@ fun AddressChip(direccion: Direccion, isSelected: Boolean, onSelect: () -> Unit)
         color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
         border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
     ) {
-        Row(Modifier.padding(12.dp)) { CustomText(direccion.nombre_etiqueta) }
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (direccion.es_principal) {
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = "Principal",
+                    tint = Color(0xFFFFD700),
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+            }
+            CustomText(direccion.nombre_etiqueta)
+        }
     }
 }
 
